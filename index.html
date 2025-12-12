@@ -614,23 +614,30 @@ wallet: function() {
             open: function(id) {
                 currentTaskId = id;
                 const task = MOCK_DB.tasks.find(t => t.id === id);
+                
+                // Text updates
                 document.getElementById('dt-title').innerText = task.title;
                 document.getElementById('dt-reward').innerText = SYS.currency + task.reward;
                 document.getElementById('dt-copy').innerText = task.copyText;
                 document.getElementById('dt-img').src = task.imgUrl;
+                
+                // 🔥 FIXED: Map Link Update Here
+                const mapBtn = document.getElementById('btn-open-map');
+                if(mapBtn) {
+                    mapBtn.href = task.mapLink;
+                }
+
+                // Reset Inputs
                 document.getElementById('task-proof-input').value = '';
                 const btn = document.getElementById('btn-verify-task');
                 btn.disabled = false;
                 btn.innerHTML = 'Submit for Verification';
+                
+                // Show Modal
                 document.getElementById('task-details-view').classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
             },
-// YEH ADD KAREIN (TaskFlow object ke andar)
-            copyRef: function() {
-                const text = document.getElementById('ref-link').innerText;
-                navigator.clipboard.writeText(text);
-                UI.showToast("Referral link copied!");
-            },
+
             close: function() {
                 document.getElementById('task-details-view').classList.add('hidden');
                 document.body.style.overflow = '';
@@ -641,7 +648,6 @@ wallet: function() {
                 navigator.clipboard.writeText(text);
                 UI.showToast("Review text copied!");
             },
-
             // --- LOGIC 1: TASK VERIFICATION (Always Success) ---
             verify: async function(e) {
                 e.preventDefault();
@@ -1127,9 +1133,11 @@ wallet: function() {
                         </div>
 
                         <!-- Step 2 -->
+                        <!-- Step 2 -->
                         <div>
                             <span class="text-[10px] font-bold bg-gray-200 text-gray-600 px-2 py-0.5 rounded uppercase mb-2 inline-block">Step 2</span>
-                            <a href="https://maps.google.com" target="_blank" class="flex items-center justify-center gap-2 w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-black transition">
+                            <!-- YAHAN ID ADD KIYA HAI: id="btn-open-map" -->
+                            <a id="btn-open-map" href="#" target="_blank" class="flex items-center justify-center gap-2 w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-black transition">
                                 Open Google Maps <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
                             </a>
                         </div>
