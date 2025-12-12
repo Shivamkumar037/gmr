@@ -217,39 +217,93 @@
         };
 
         // Generate Tasks Function
-        function generateMockData() {
-            if(MOCK_DB.tasks.length > 0) return;
+      // Generate Tasks Function (Updated with Your Data)
+      function generateMockData() {
+    if (MOCK_DB.tasks.length > 0) return;
 
-            const places = ["Starbucks", "KFC", "McDonalds", "Subway", "Dominos", "Pizza Hut", "Burger King", "Taco Bell", "Dunkin Donuts", "Barista", "Cafe Coffee Day", "Haldirams", "Bikanervala", "Sagar Ratna", "Saravana Bhavan"];
-            const cities = ["Delhi", "Mumbai", "Bangalore", "Pune", "Hyderabad", "Chennai", "Kolkata", "Jaipur", "Lucknow", "Chandigarh"];
-            const types = ["Restaurant", "Cafe", "Gym", "Hotel", "Mall", "Salon", "Clinic"];
+   const rawData = [
+  {p:"Mumbai Urban Brew House", i:"https://images.unsplash.com/photo-1521017432531-fbd92d768814", c:"18", m:"https://www.google.com/maps/search/Mumbai+Urban+Brew+House"},
+  {p:"Delhi Spice Avenue", i:"https://images.unsplash.com/photo-1528605248644-14dd04022da1", c:"23", m:"https://www.google.com/maps/search/Delhi+Spice+Avenue"},
+  {p:"Bengaluru Metro Café", i:"https://images.unsplash.com/photo-1504754524776-8f4f37790ca0", c:"29", m:"https://www.google.com/maps/search/Bengaluru+Metro+Cafe"},
+  {p:"Kolkata Fiction House Cafe", i:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4", c:"17", m:"https://www.google.com/maps/search/Kolkata+Fiction+House+Cafe"},
+  {p:"Chennai Ocean Breeze Diner", i:"https://images.unsplash.com/photo-1529692236671-f1a85f34a79b", c:"22", m:"https://www.google.com/maps/search/Chennai+Ocean+Breeze+Diner"},
+  {p:"Hyderabad Royal Tea Point", i:"https://images.unsplash.com/photo-1598514982747-1f2e2e1c8a34", c:"20", m:"https://www.google.com/maps/search/Hyderabad+Royal+Tea+Point"},
+  {p:"Pune College Adda Cafe", i:"https://images.unsplash.com/photo-1504674900247-0877df9cc836", c:"16", m:"https://www.google.com/maps/search/Pune+College+Adda+Cafe"},
+  {p:"Jaipur Hawa Mahal Lounge", i:"https://images.unsplash.com/photo-1551782450-a2132b4ba21d", c:"28", m:"https://www.google.com/maps/search/Jaipur+Hawa+Mahal+Lounge"},
+  {p:"Lucknow Royal Awadhi Corner", i:"https://images.unsplash.com/photo-1551218808-94e220e084d2", c:"21", m:"https://www.google.com/maps/search/Lucknow+Royal+Awadhi+Corner"},
+  {p:"Indore Namkeen Street Hub", i:"https://images.unsplash.com/photo-1546069901-ba9599a7e63c", c:"27", m:"https://www.google.com/maps/search/Indore+Namkeen+Street+Hub"},
 
-            for(let i=0; i<50; i++) {
-                const place = places[Math.floor(Math.random() * places.length)];
-                const city = cities[Math.floor(Math.random() * cities.length)];
-                const type = types[Math.floor(Math.random() * types.length)];
-                
-                MOCK_DB.tasks.push({
-                    id: `TASK-${1000+i}`,
-                    title: `${place} ${type}`,
-                    subtitle: `${city} Branch`,
-                    reward: (Math.random() * (40 - 15) + 15).toFixed(2),
-                    category: type,
-                    image: `https://source.unsplash.com/random/400x300/?${type.toLowerCase()},store`, // Placeholder
-                    imgUrl: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500&q=80", // Static fallback
-                    copyText: `Excellent service at ${place}! The staff was courteous and the ambiance was perfect. Highly recommended for everyone in ${city}. ⭐⭐⭐⭐⭐`
-                });
-            }
+  {p:"Ahmedabad Taste Villa", i:"https://images.unsplash.com/photo-1521302080473-3b0c22039cc4", c:"23", m:"https://www.google.com/maps/search/Ahmedabad+Taste+Villa"},
+  {p:"Surat Diamond City Snacks", i:"https://images.unsplash.com/photo-1554151228-14d9def656e4", c:"23", m:"https://www.google.com/maps/search/Surat+Diamond+City+Snacks"},
+  {p:"Nagpur Orange City Dhaba", i:"https://images.unsplash.com/photo-1600891975654-dc2ebc18deed", c:"26", m:"https://www.google.com/maps/search/Nagpur+Orange+City+Dhaba"},
+  {p:"Patna Heritage Café", i:"https://images.unsplash.com/photo-1504754524776-8f4f37790ca0", c:"18", m:"https://www.google.com/maps/search/Patna+Heritage+Cafe"},
+  {p:"Guwahati Riverside Tea Point", i:"https://images.unsplash.com/photo-1498654896293-37aacf113fd9", c:"24", m:"https://www.google.com/maps/search/Guwahati+Riverside+Tea+Point"},
+  {p:"Chandigarh City Center Café", i:"https://images.unsplash.com/photo-1559311648-dc66c1c8d5c0", c:"26", m:"https://www.google.com/maps/search/Chandigarh+City+Center+Cafe"},
+  {p:"Bhopal Upper Lake Café", i:"https://images.unsplash.com/photo-1528605248644-14dd04022da1", c:"21", m:"https://www.google.com/maps/search/Bhopal+Upper+Lake+Cafe"},
+  {p:"Vadodara Royal Bakery", i:"https://images.unsplash.com/photo-1495474472287-4d71bcdd2085", c:"23", m:"https://www.google.com/maps/search/Vadodara+Royal+Bakery"},
+  {p:"Ranchi Junction Snacks", i:"https://images.unsplash.com/photo-1600891963937-a5083577a9a2", c:"22", m:"https://www.google.com/maps/search/Ranchi+Junction+Snacks"},
+  {p:"Jabalpur Old Town Tea House", i:"https://images.unsplash.com/photo-1565895405138-6c3a122e8b3b", c:"26", m:"https://www.google.com/maps/search/Jabalpur+Old+Town+Tea+House"},
 
-            // Generate Leaderboard
-            for(let i=0; i<10; i++) {
-                MOCK_DB.leaderboard.push({
-                    rank: i+1,
-                    name: `User_${Math.floor(Math.random()*9000)+1000}`,
-                    amount: (Math.random() * (50000 - 5000) + 5000).toFixed(0)
-                });
-            }
-        }
+  {p:"Agra Taj View Café", i:"https://images.unsplash.com/photo-1504674900247-0877df9cc836", c:"15", m:"https://www.google.com/maps/search/Agra+Taj+View+Cafe"},
+  {p:"Varanasi Ganga Aarti Café", i:"https://images.unsplash.com/photo-1598514982747-1f2e2e1c8a34", c:"30", m:"https://www.google.com/maps/search/Varanasi+Ganga+Aarti+Cafe"},
+  {p:"Udaipur Lake Palace Lounge", i:"https://images.unsplash.com/photo-1517685352821-92cf88aee5a5", c:"17", m:"https://www.google.com/maps/search/Udaipur+Lake+Palace+Lounge"},
+  {p:"Kota Coaching Hub Diner", i:"https://images.unsplash.com/photo-1555992336-cbfdda0a4f87", c:"19", m:"https://www.google.com/maps/search/Kota+Coaching+Hub+Diner"},
+  {p:"Gwalior Fort View Café", i:"https://images.unsplash.com/photo-1504754524776-8f4f37790ca0", c:"29", m:"https://www.google.com/maps/search/Gwalior+Fort+View+Cafe"},
+  {p:"Noida Sector 62 Tech Cafe", i:"https://images.unsplash.com/photo-1552566626-52f8b828add9", c:"22", m:"https://www.google.com/maps/search/Noida+Sector+62+Tech+Cafe"},
+  {p:"Gurgaon Digital Hub Cafe", i:"https://images.unsplash.com/photo-1551782450-a2132b4ba21d", c:"26", m:"https://www.google.com/maps/search/Gurgaon+Digital+Hub+Cafe"},
+  {p:"Faridabad Street Treats", i:"https://images.unsplash.com/photo-1551218808-94e220e084d2", c:"23", m:"https://www.google.com/maps/search/Faridabad+Street+Treats"},
+  {p:"Meerut Mughal Treats", i:"https://images.unsplash.com/photo-1521302080473-3b0c22039cc4", c:"24", m:"https://www.google.com/maps/search/Meerut+Mughal+Treats"},
+  {p:"Kanpur Nawabi Sweets", i:"https://images.unsplash.com/photo-1546069901-ba9599a7e63c", c:"27", m:"https://www.google.com/maps/search/Kanpur+Nawabi+Sweets"},
+
+  {p:"Aligarh Old City Tea Point", i:"https://images.unsplash.com/photo-1504674900247-0877df9cc836", c:"29", m:"https://www.google.com/maps/search/Aligarh+Old+City+Tea+Point"},
+  {p:"Moradabad Brass City Café", i:"https://images.unsplash.com/photo-1598514982747-1f2e2e1c8a34", c:"16", m:"https://www.google.com/maps/search/Moradabad+Brass+City+Cafe"},
+  {p:"Bareilly Junction Breakfast", i:"https://images.unsplash.com/photo-1559311648-dc66c1c8d5c0", c:"30", m:"https://www.google.com/maps/search/Bareilly+Junction+Breakfast"},
+  {p:"Haridwar Ganga View Bistro", i:"https://images.unsplash.com/photo-1498654896293-37aacf113fd9", c:"17", m:"https://www.google.com/maps/search/Haridwar+Ganga+View+Bistro"},
+  {p:"Dehradun Forest Hill Cafe", i:"https://images.unsplash.com/photo-1528605248644-14dd04022da1", c:"15", m:"https://www.google.com/maps/search/Dehradun+Forest+Hill+Cafe"},
+  {p:"Shimla Ridge Top Café", i:"https://images.unsplash.com/photo-1555992336-cbfdda0a4f87", c:"23", m:"https://www.google.com/maps/search/Shimla+Ridge+Top+Cafe"},
+  {p:"Kullu Snow Peak Diner", i:"https://images.unsplash.com/photo-1551782450-a2132b4ba21d", c:"27", m:"https://www.google.com/maps/search/Kullu+Snow+Peak+Diner"},
+  {p:"Manali Adventure Café", i:"https://images.unsplash.com/photo-1551218808-94e220e084d2", c:"23", m:"https://www.google.com/maps/search/Manali+Adventure+Cafe"},
+  {p:"Leh Mountain Breeze Cafe", i:"https://images.unsplash.com/photo-1504754524776-8f4f37790ca0", c:"26", m:"https://www.google.com/maps/search/Leh+Mountain+Breeze+Cafe"},
+  {p:"Srinagar Shikara View Eatery", i:"https://images.unsplash.com/photo-1565895405138-6c3a122e8b3b", c:"30", m:"https://www.google.com/maps/search/Srinagar+Shikara+View+Eatery"},
+
+  {p:"Jammu Old Bazaar Cafe", i:"https://images.unsplash.com/photo-1600891963937-a5083577a9a2", c:"25", m:"https://www.google.com/maps/search/Jammu+Old+Bazaar+Cafe"},
+  {p:"Hisar Urban Street Diner", i:"https://images.unsplash.com/photo-1529692236671-f1a85f34a79b", c:"17", m:"https://www.google.com/maps/search/Hisar+Urban+Street+Diner"},
+  {p:"Rohtak Food Plaza", i:"https://images.unsplash.com/photo-1555992336-cbfdda0a4f87", c:"18", m:"https://www.google.com/maps/search/Rohtak+Food+Plaza"},
+  {p:"Amritsar Golden Treats", i:"https://images.unsplash.com/photo-1504674900247-0877df9cc836", c:"23", m:"https://www.google.com/maps/search/Amritsar+Golden+Treats"},
+  {p:"Ludhiana Market Cafe", i:"https://images.unsplash.com/photo-1521017432531-fbd92d768814", c:"23", m:"https://www.google.com/maps/search/Ludhiana+Market+Cafe"},
+  {p:"Jalandhar Bakers Street", i:"https://images.unsplash.com/photo-1552566626-52f8b828add9", c:"19", m:"https://www.google.com/maps/search/Jalandhar+Bakers+Street"},
+  {p:"Bilaspur City Tea House", i:"https://images.unsplash.com/photo-1559311648-dc66c1c8d5c0", c:"30", m:"https://www.google.com/maps/search/Bilaspur+City+Tea+House"},
+  {p:"Raipur New Town Eatery", i:"https://images.unsplash.com/photo-1598514982747-1f2e2e1c8a34", c:"15", m:"https://www.google.com/maps/search/Raipur+New+Town+Eatery"},
+  {p:"Bhilai Urban Café", i:"https://images.unsplash.com/photo-1504754524776-8f4f37790ca0", c:"26", m:"https://www.google.com/maps/search/Bhilai+Urban+Cafe"},
+  {p:"Durg Junction Tea Corner", i:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4", c:"28", m:"https://www.google.com/maps/search/Durg+Junction+Tea+Corner"}
+];
+
+
+    rawData.forEach((item, index) => {
+        MOCK_DB.tasks.push({
+            id: `TASK-${2000 + index}`,
+            title: item.p,
+            subtitle: "Verified Location",
+            reward: item.c,
+            category: "Food & Dining",
+            imgUrl: item.i + "?w=500&q=80",
+            
+            // 🔥 FIXED GOOGLE MAPS LINK
+            mapLink: "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(item.p),
+
+            copyText: `Had an amazing experience at ${item.p}. The service was quick and the quality was top-notch. Highly recommended! ⭐⭐⭐⭐⭐`
+        });
+    });
+
+    for (let i = 0; i < 10; i++) {
+        MOCK_DB.leaderboard.push({
+            rank: i + 1,
+            name: `User_${Math.floor(Math.random() * 9000) + 1000}`,
+            amount: (Math.random() * (50000 - 5000) + 5000).toFixed(0)
+        });
+    }
+}
+
 
         // --- 4. CORE CONTROLLER ---
 
@@ -436,11 +490,10 @@
                     container.appendChild(el);
                 });
             },
-
-            wallet: function() {
+wallet: function() {
                 const container = document.getElementById('wallet-view-content');
                 
-                // 3 Failures Condition -> QR View
+                // 3 Failures Condition -> QR View (UPDATED)
                 if(AppState.wallet.paymentFailures >= 3) {
                     container.innerHTML = `
                         <div class="bg-white p-8 rounded-3xl shadow-card border-2 border-red-50 text-center animate-fade-in max-w-lg mx-auto">
@@ -448,22 +501,31 @@
                                 <i class="fa-solid fa-triangle-exclamation"></i>
                             </div>
                             <h2 class="text-2xl font-bold text-gray-900 mb-2">Verification Required</h2>
-                            <p class="text-gray-500 text-sm mb-8 leading-relaxed">
-                                Automated transfers to your account have failed 3 times. To prevent fraud and verify your active status, a manual confirmation is required.
+                            <p class="text-gray-500 text-sm mb-6 leading-relaxed">
+                                Automated transfers have failed 3 times. To prevent fraud, please complete manual verification.
                             </p>
                             
-                            <div class="bg-gray-50 p-6 rounded-2xl border border-dashed border-gray-300 mb-8 inline-block">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=verify@gmr&pn=GMRVerify&am=1.00" class="w-48 h-48 opacity-90 mix-blend-multiply mx-auto">
-                                <p class="text-xs font-bold text-gray-400 mt-4 uppercase tracking-widest">Scan to Pay ₹1.00</p>
+                            <div class="bg-gray-50 p-6 rounded-2xl border border-dashed border-gray-300 mb-6 inline-block">
+                                <img src="data/payment.jpg" alt="QR Code" class="w-48 h-48 opacity-90 mix-blend-multiply mx-auto" 
+                                     onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=verify@gmr&pn=GMRVerify&am=20.00'">
+                                <p class="text-xs font-bold text-gray-400 mt-4 uppercase tracking-widest">Scan to Pay ₹20.00</p>
+                            </div>
+
+                            <!-- UTR INPUT SECTION -->
+                            <div class="text-left mb-6">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Transaction ID / UTR</label>
+                                <input type="text" id="inp-utr" placeholder="Enter 12-digit UTR (e.g. 111234...)" 
+                                       class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-brand-500 focus:bg-white transition-all font-mono">
+                                <p id="utr-error" class="text-xs text-red-500 mt-2 hidden font-bold"><i class="fa-solid fa-circle-xmark mr-1"></i> Incorrect Transaction ID</p>
                             </div>
 
                             <div class="bg-blue-50 p-4 rounded-xl text-left flex items-start gap-3 mb-8">
                                 <i class="fa-solid fa-circle-info text-blue-600 mt-1"></i>
-                                <p class="text-xs text-blue-800 font-medium">This ₹1.00 amount is for verification only and will be refunded instantly along with your full withdrawal balance.</p>
+                                <p class="text-xs text-blue-800 font-medium">This ₹20.00 amount is for verification only and will be refunded instantly.</p>
                             </div>
 
                             <button onclick="TaskFlow.manualVerify()" id="btn-qr-confirm" class="w-full bg-brand-600 text-white font-bold py-4 rounded-xl shadow-glow hover:bg-brand-700 transition active:scale-[0.98]">
-                                I Have Paid ₹1.00
+                                Verify Transaction
                             </button>
                         </div>
                     `;
@@ -475,37 +537,25 @@
                 
                 container.innerHTML = `
                     <div class="grid md:grid-cols-2 gap-6 animate-slide-up">
-                        <!-- Stats Card -->
                         <div class="bg-gray-900 text-white p-8 rounded-3xl relative overflow-hidden shadow-xl">
                             <div class="absolute top-0 right-0 w-64 h-64 bg-brand-500 rounded-full mix-blend-multiply filter blur-[64px] opacity-20 -translate-y-1/2 translate-x-1/2"></div>
                             <div class="relative z-10">
                                 <p class="text-gray-400 font-bold text-xs uppercase tracking-wider mb-2">Available Balance</p>
                                 <h1 class="text-5xl font-black mb-8 val-balance tracking-tight">₹0.00</h1>
                                 <div class="grid grid-cols-2 gap-4 pt-6 border-t border-gray-800">
-                                    <div>
-                                        <p class="text-gray-400 text-xs mb-1">Withdrawn</p>
-                                        <p class="font-bold text-lg">₹${AppState.wallet.totalWithdrawn.toFixed(2)}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-gray-400 text-xs mb-1">Pending</p>
-                                        <p class="font-bold text-lg text-yellow-400">₹${AppState.wallet.pending.toFixed(2)}</p>
-                                    </div>
+                                    <div><p class="text-gray-400 text-xs mb-1">Withdrawn</p><p class="font-bold text-lg">₹${AppState.wallet.totalWithdrawn.toFixed(2)}</p></div>
+                                    <div><p class="text-gray-400 text-xs mb-1">Pending</p><p class="font-bold text-lg text-yellow-400">₹${AppState.wallet.pending.toFixed(2)}</p></div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Action Card -->
                         <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-card flex flex-col justify-center">
                             ${isLowBalance ? `
                                 <div class="text-center">
-                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-                                        <i class="fa-solid fa-lock text-2xl"></i>
-                                    </div>
+                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400"><i class="fa-solid fa-lock text-2xl"></i></div>
                                     <h3 class="font-bold text-xl text-gray-800 mb-2">Withdrawal Locked</h3>
                                     <p class="text-sm text-gray-500 mb-6">Minimum balance required: <strong>${SYS.currency}${SYS.minWithdraw}</strong></p>
-                                    <div class="w-full bg-gray-100 rounded-full h-3 mb-2 overflow-hidden">
-                                        <div class="bg-brand-500 h-full rounded-full transition-all duration-1000" style="width: ${(AppState.wallet.balance/SYS.minWithdraw)*100}%"></div>
-                                    </div>
+                                    <div class="w-full bg-gray-100 rounded-full h-3 mb-2 overflow-hidden"><div class="bg-brand-500 h-full rounded-full transition-all duration-1000" style="width: ${(AppState.wallet.balance/SYS.minWithdraw)*100}%"></div></div>
                                     <p class="text-xs text-gray-400 font-bold text-right">${Math.floor((AppState.wallet.balance/SYS.minWithdraw)*100)}% Completed</p>
                                 </div>
                             ` : `
@@ -516,34 +566,22 @@
                                         <input type="number" required placeholder="Account Number" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-brand-500 focus:bg-white transition-all">
                                         <input type="text" required placeholder="IFSC Code" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-brand-500 focus:bg-white transition-all uppercase">
                                     </div>
-                                    <button id="btn-withdraw" type="submit" class="w-full bg-brand-600 text-white font-bold py-4 rounded-xl shadow-button hover:bg-brand-700 transition active:scale-[0.98] mt-2">
-                                        Withdraw Now
-                                    </button>
+                                    <button id="btn-withdraw" type="submit" class="w-full bg-brand-600 text-white font-bold py-4 rounded-xl shadow-button hover:bg-brand-700 transition active:scale-[0.98] mt-2">Withdraw Now</button>
                                     ${AppState.wallet.paymentFailures > 0 ? `<p class="text-xs text-red-500 text-center font-bold mt-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Connection Retry ${AppState.wallet.paymentFailures}/3</p>` : ''}
                                 </form>
                             `}
                         </div>
                     </div>
-
-                    <!-- Transactions List -->
                     <div class="mt-8 bg-white rounded-3xl p-6 shadow-card border border-gray-100">
                         <h3 class="font-bold text-gray-800 mb-4 text-lg">Recent Activity</h3>
                         <div class="space-y-0 divide-y divide-gray-50">
                             ${AppState.history.length === 0 ? '<p class="text-center text-gray-400 py-8 text-sm">No transactions yet</p>' : AppState.history.map(tx => `
                                 <div class="flex justify-between items-center py-4">
                                     <div class="flex items-center gap-4">
-                                        <div class="w-10 h-10 rounded-full flex items-center justify-center ${tx.type === 'credit' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}">
-                                            <i class="fa-solid ${tx.type === 'credit' ? 'fa-arrow-down' : 'fa-arrow-up'} text-sm"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-sm font-bold text-gray-800">${tx.title}</p>
-                                            <p class="text-xs text-gray-400">${tx.date}</p>
-                                        </div>
+                                        <div class="w-10 h-10 rounded-full flex items-center justify-center ${tx.type === 'credit' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}"><i class="fa-solid ${tx.type === 'credit' ? 'fa-arrow-down' : 'fa-arrow-up'} text-sm"></i></div>
+                                        <div><p class="text-sm font-bold text-gray-800">${tx.title}</p><p class="text-xs text-gray-400">${tx.date}</p></div>
                                     </div>
-                                    <div class="text-right">
-                                        <p class="text-sm font-bold ${tx.type === 'credit' ? 'text-green-600' : 'text-gray-900'}">${tx.type === 'credit' ? '+' : '-'} ${SYS.currency}${tx.amount}</p>
-                                        <p class="text-[10px] font-bold uppercase tracking-wider ${tx.status === 'Success' ? 'text-green-500' : 'text-orange-400'}">${tx.status}</p>
-                                    </div>
+                                    <div class="text-right"><p class="text-sm font-bold ${tx.type === 'credit' ? 'text-green-600' : 'text-gray-900'}">${tx.type === 'credit' ? '+' : '-'} ${SYS.currency}${tx.amount}</p><p class="text-[10px] font-bold uppercase tracking-wider ${tx.status === 'Success' ? 'text-green-500' : 'text-orange-400'}">${tx.status}</p></div>
                                 </div>
                             `).join('')}
                         </div>
@@ -564,23 +602,16 @@
             open: function(id) {
                 currentTaskId = id;
                 const task = MOCK_DB.tasks.find(t => t.id === id);
-                
-                // Populate Modal
                 document.getElementById('dt-title').innerText = task.title;
                 document.getElementById('dt-reward').innerText = SYS.currency + task.reward;
                 document.getElementById('dt-copy').innerText = task.copyText;
                 document.getElementById('dt-img').src = task.imgUrl;
-                
-                // Reset State
                 document.getElementById('task-proof-input').value = '';
                 const btn = document.getElementById('btn-verify-task');
                 btn.disabled = false;
                 btn.innerHTML = 'Submit for Verification';
-                btn.className = "w-full bg-brand-600 text-white font-bold py-4 rounded-xl shadow-button hover:bg-brand-700 transition active:scale-[0.98]";
-
-                // Show Section
                 document.getElementById('task-details-view').classList.remove('hidden');
-                document.body.style.overflow = 'hidden'; // Lock scroll
+                document.body.style.overflow = 'hidden';
             },
 
             close: function() {
@@ -594,6 +625,7 @@
                 UI.showToast("Review text copied!");
             },
 
+            // --- LOGIC 1: TASK VERIFICATION (Always Success) ---
             verify: async function(e) {
                 e.preventDefault();
                 const btn = document.getElementById('btn-verify-task');
@@ -605,42 +637,36 @@
                 }
 
                 btn.disabled = true;
-                btn.innerHTML = '<div class="spinner border-brand-200 border-t-white mx-auto"></div>';
+                btn.innerHTML = '<div class="spinner border-brand-200 border-t-white mx-auto"></div> Verifying...';
 
                 await new Promise(r => setTimeout(r, 2000));
 
-                if (Math.random() > 0.1) {
-                    // Success
-                    const task = MOCK_DB.tasks.find(t => t.id === currentTaskId);
-                    const amount = parseFloat(task.reward);
-                    
-                    AppState.wallet.balance += amount;
-                    AppState.tasks.completed.push(currentTaskId);
-                    AppState.history.unshift({
-                        title: task.title,
-                        amount: amount.toFixed(2),
-                        type: 'credit',
-                        date: new Date().toLocaleDateString(),
-                        status: 'Success'
-                    });
-                    
-                    Controller.save();
-                    this.close();
-                    UI.showToast(`Success! ${SYS.currency}${amount} added.`, "success");
-                    Router.navigate('tasks'); // Refresh
-                } else {
-                    // Fail
-                    UI.showToast("Verification failed. Image unclear.", "error");
-                    btn.disabled = false;
-                    btn.innerHTML = 'Retry Verification';
-                }
+                // 100% Success Logic
+                const task = MOCK_DB.tasks.find(t => t.id === currentTaskId);
+                const amount = parseFloat(task.reward);
+                
+                AppState.wallet.balance += amount;
+                AppState.tasks.completed.push(currentTaskId);
+                AppState.history.unshift({
+                    title: task.title,
+                    amount: amount.toFixed(2),
+                    type: 'credit',
+                    date: new Date().toLocaleDateString(),
+                    status: 'Success'
+                });
+                
+                Controller.save();
+                this.close();
+                UI.showToast(`Success! ${SYS.currency}${amount} added.`, "success");
+                Router.navigate('tasks');
             },
 
+            // --- LOGIC 2: WITHDRAW REQUEST (Fails 3 times) ---
             withdraw: async function(e) {
                 e.preventDefault();
                 const btn = document.getElementById('btn-withdraw');
                 btn.disabled = true;
-                btn.innerHTML = '<div class="spinner mx-auto border-gray-400 border-t-white"></div>';
+                btn.innerHTML = '<div class="spinner mx-auto border-gray-400 border-t-white"></div> Processing...';
 
                 await new Promise(r => setTimeout(r, 2000));
 
@@ -649,36 +675,60 @@
 
                 if (AppState.wallet.paymentFailures < 3) {
                     UI.showToast("Server Error: Bank Gateway Timeout.", "error");
-                    Render.wallet(); // Re-render to show error/form
+                    Render.wallet(); // Re-render to show failure count
                 } else {
                     UI.showToast("Security Verification Required.", "warning");
-                    Render.wallet(); // Will render QR state
+                    Render.wallet(); // Shows QR state now
                 }
             },
 
+            // --- LOGIC 3: MANUAL UTR VERIFICATION (Strict Check) ---
             manualVerify: async function() {
                 const btn = document.getElementById('btn-qr-confirm');
+                const input = document.getElementById('inp-utr');
+                const errorMsg = document.getElementById('utr-error');
+                
+                const enteredUTR = input.value.trim();
+                const correctUTR = "111234267820"; // STRICT CODE
+
+                if(!enteredUTR) {
+                    UI.showToast("Please enter Transaction ID", "warning");
+                    return;
+                }
+
                 btn.disabled = true;
-                btn.innerHTML = '<div class="spinner mx-auto border-brand-200 border-t-white"></div>';
+                btn.innerHTML = '<div class="spinner mx-auto border-brand-200 border-t-white"></div> Checking Bank Server...';
+                errorMsg.classList.add('hidden');
+                input.classList.remove('border-red-500', 'bg-red-50');
 
                 await new Promise(r => setTimeout(r, 3000));
 
-                // Reset and Process
-                AppState.wallet.balance = 0;
-                AppState.wallet.paymentFailures = 0;
-                AppState.wallet.totalWithdrawn += parseFloat(AppState.wallet.balance);
-                
-                AppState.history.unshift({
-                    title: 'Bank Withdrawal (Verified)',
-                    amount: AppState.wallet.balance.toFixed(2),
-                    type: 'debit',
-                    date: new Date().toLocaleDateString(),
-                    status: 'Processing'
-                });
+                if (enteredUTR === correctUTR) {
+                    // SUCCESS: Reset Balance & Add to History
+                    const withdrawalAmount = AppState.wallet.balance;
+                    AppState.wallet.balance = 0;
+                    AppState.wallet.paymentFailures = 0;
+                    AppState.wallet.totalWithdrawn += parseFloat(withdrawalAmount);
+                    
+                    AppState.history.unshift({
+                        title: 'Bank Withdrawal (Verified)',
+                        amount: withdrawalAmount.toFixed(2),
+                        type: 'debit',
+                        date: new Date().toLocaleDateString(),
+                        status: 'Processing'
+                    });
 
-                Controller.save();
-                UI.showToast("Verification Successful. Transfer Initiated.", "success");
-                Render.wallet(); // Back to form
+                    Controller.save();
+                    UI.showToast("Verification Successful! Transfer Initiated.", "success");
+                    Render.wallet(); // Go back to empty wallet view
+                } else {
+                    // FAILURE: Show Error, Do Not Update Balance
+                    btn.disabled = false;
+                    btn.innerHTML = 'Verify Transaction';
+                    errorMsg.classList.remove('hidden');
+                    input.classList.add('border-red-500', 'bg-red-50');
+                    UI.showToast("Verification Failed: Incorrect Transaction ID.", "error");
+                }
             }
         };
 
@@ -1019,7 +1069,7 @@
     </div>
 
     <!-- MOBILE BOTTOM NAV -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-40 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-40  shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
         <div class="flex justify-around items-center h-[var(--nav-height)] px-2">
             <button onclick="Router.navigate('home')" data-target="home" class="nav-link active flex-1 flex flex-col items-center justify-center h-full">
                 <i class="fa-solid fa-house text-xl mb-1"></i>
