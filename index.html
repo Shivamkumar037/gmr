@@ -440,6 +440,7 @@
                 if (pageId === 'home') Render.home();
                 if (pageId === 'tasks') Render.tasks();
                 if (pageId === 'wallet') Render.wallet();
+                if (pageId === 'refer') Render.refer();
                 if (pageId === 'profile') Render.profile();
             }
         };
@@ -588,6 +589,17 @@ wallet: function() {
                     </div>
                 `;
             },
+            // YEH ADD KAREIN (Render object ke andar)
+            refer: function() {
+                // Update Link
+                const link = `gmrcom.netlify.app`;
+                document.getElementById('ref-link').innerText = link;
+                
+                // Update Stats (Mock logic)
+                // Real app mein ye AppState.referrals se aayega
+                document.getElementById('ref-count').innerText = "0"; 
+                document.getElementById('ref-earn').innerText = "₹0.00";
+            },
 
             profile: function() {
                 // Profile is mostly static, specific updates handled by UI
@@ -613,7 +625,12 @@ wallet: function() {
                 document.getElementById('task-details-view').classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
             },
-
+// YEH ADD KAREIN (TaskFlow object ke andar)
+            copyRef: function() {
+                const text = document.getElementById('ref-link').innerText;
+                navigator.clipboard.writeText(text);
+                UI.showToast("Referral link copied!");
+            },
             close: function() {
                 document.getElementById('task-details-view').classList.add('hidden');
                 document.body.style.overflow = '';
@@ -836,6 +853,9 @@ wallet: function() {
                     <button onclick="Router.navigate('tasks')" data-target="tasks" class="desktop-nav-link w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-gray-500 font-medium hover:bg-gray-50 transition text-sm">
                         <i class="fa-solid fa-list-check text-lg w-6"></i> Available Tasks
                     </button>
+                    <button onclick="Router.navigate('refer')" data-target="refer" class="desktop-nav-link w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-gray-500 font-medium hover:bg-gray-50 transition text-sm">
+                        <i class="fa-solid fa-gift text-lg w-6"></i> Refer & Earn
+                    </button>
                     <button onclick="Router.navigate('wallet')" data-target="wallet" class="desktop-nav-link w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-gray-500 font-medium hover:bg-gray-50 transition text-sm">
                         <i class="fa-solid fa-wallet text-lg w-6"></i> My Wallet
                     </button>
@@ -958,7 +978,79 @@ wallet: function() {
                         <!-- Populated via JS -->
                     </div>
                 </div>
+<!-- VIEW: REFER -->
+                <div id="refer" class="view-section hidden animate-fade-in space-y-6">
+                    <h2 class="text-2xl font-bold text-gray-900 md:hidden">Invite Friends</h2>
 
+                    <!-- Hero Card -->
+                    <div class="bg-gradient-to-r from-brand-600 to-brand-800 rounded-3xl p-8 text-center text-white shadow-xl relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                        <div class="relative z-10">
+                            <div class="w-16 h-16 bg-white/20 backdrop-blur rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                                <i class="fa-solid fa-gift text-3xl text-yellow-300 animate-pulse-slow"></i>
+                            </div>
+                            <h2 class="text-3xl font-black mb-2">Refer & Earn ₹50</h2>
+                            <p class="text-brand-100 text-sm max-w-xs mx-auto mb-6">Invite your friends to join GMR Pro. You get ₹50 instantly when they complete their first task.</p>
+                            
+                            <div class="bg-white/10 backdrop-blur border border-white/20 p-4 rounded-xl flex items-center justify-between gap-3 max-w-sm mx-auto">
+                                <code class="font-mono text-sm text-white/90 truncate" id="ref-link">gmr.pro/join/user123</code>
+                                <button onclick="TaskFlow.copyRef()" class="bg-white text-brand-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-brand-50 transition">
+                                    COPY
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm text-center">
+                            <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Total Referrals</p>
+                            <p class="text-2xl font-black text-gray-900 mt-1" id="ref-count">0</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm text-center">
+                            <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Total Earnings</p>
+                            <p class="text-2xl font-black text-brand-600 mt-1" id="ref-earn">₹0.00</p>
+                        </div>
+                    </div>
+
+                    <!-- Share Buttons -->
+                    <div class="space-y-3">
+                        <h3 class="font-bold text-gray-800 text-sm">Share via</h3>
+                        <button onclick="UI.showToast('Opening WhatsApp...')" class="w-full bg-[#25D366] text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm hover:shadow-md transition active:scale-95">
+                            <i class="fa-brands fa-whatsapp text-xl"></i> Share on WhatsApp
+                        </button>
+                        <button onclick="UI.showToast('Opening Telegram...')" class="w-full bg-[#0088cc] text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm hover:shadow-md transition active:scale-95">
+                            <i class="fa-brands fa-telegram text-xl"></i> Share on Telegram
+                        </button>
+                        <button onclick="UI.showToast('More options...')" class="w-full bg-white border border-gray-200 text-gray-700 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-50 transition active:scale-95">
+                            <i class="fa-solid fa-share-nodes"></i> More Options
+                        </button>
+                    </div>
+
+                    <!-- How it works -->
+                    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                        <h3 class="font-bold text-gray-800 mb-4">How it works</h3>
+                        <div class="space-y-6 relative">
+                            <div class="absolute left-3 top-2 bottom-2 w-0.5 bg-gray-100"></div>
+                            
+                            <div class="relative pl-10">
+                                <div class="absolute left-0 top-0 w-6 h-6 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center text-xs font-bold border-2 border-white">1</div>
+                                <h4 class="text-sm font-bold text-gray-900">Share your link</h4>
+                                <p class="text-xs text-gray-500 mt-1">Send your unique referral link to friends via WhatsApp or Social Media.</p>
+                            </div>
+                            <div class="relative pl-10">
+                                <div class="absolute left-0 top-0 w-6 h-6 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center text-xs font-bold border-2 border-white">2</div>
+                                <h4 class="text-sm font-bold text-gray-900">Friend Joins</h4>
+                                <p class="text-xs text-gray-500 mt-1">Your friend registers using your link and verifies their mobile number.</p>
+                            </div>
+                            <div class="relative pl-10">
+                                <div class="absolute left-0 top-0 w-6 h-6 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center text-xs font-bold border-2 border-white">3</div>
+                                <h4 class="text-sm font-bold text-gray-900">You Earn ₹50</h4>
+                                <p class="text-xs text-gray-500 mt-1">Once they complete their first task, you get ₹50 credited to your wallet instantly.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <!-- VIEW: PROFILE -->
                 <div id="profile" class="view-section hidden animate-fade-in space-y-6">
                     <h2 class="text-2xl font-bold text-gray-900 md:hidden">Profile</h2>
@@ -1078,6 +1170,10 @@ wallet: function() {
             <button onclick="Router.navigate('tasks')" data-target="tasks" class="nav-link flex-1 flex flex-col items-center justify-center h-full">
                 <i class="fa-solid fa-layer-group text-xl mb-1"></i>
                 <span class="text-[10px] font-bold">Tasks</span>
+            </button>
+            <button onclick="Router.navigate('refer')" data-target="refer" class="nav-link flex-1 flex flex-col items-center justify-center h-full">
+                <i class="fa-solid fa-gift text-xl mb-1"></i>
+                <span class="text-[10px] font-bold">Refer</span>
             </button>
             <button onclick="Router.navigate('wallet')" data-target="wallet" class="nav-link flex-1 flex flex-col items-center justify-center h-full">
                 <i class="fa-solid fa-wallet text-xl mb-1"></i>
