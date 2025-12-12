@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartopiya - Shop Online</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Toastify for alerts -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#059669', // Emerald 600 - Main Green
+                        secondary: '#10b981',
+                        dark: '#064e3b',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        /* Smooth Fade Animation */
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Loader */
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #059669; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- ================= 1. LOGIN SCREEN ================= -->
+    <div id="login-screen" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center p-6 hidden">
+        <div class="w-full max-w-sm">
+            <div class="flex flex-col items-center mb-8">
+                <div class="bg-primary text-white p-4 rounded-2xl shadow-lg mb-4">
+                    <i class="fa-solid fa-bag-shopping text-4xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-800 tracking-wide">Cartopiya</h1>
+                <p class="text-gray-500 text-sm mt-1">Shopping made simple</p>
+            </div>
+
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user absolute left-3 top-3.5 text-gray-400"></i>
+                        <input type="text" id="login-name" required placeholder="Enter your name" 
+                            class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition bg-gray-50">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-phone absolute left-3 top-3.5 text-gray-400"></i>
+                        <input type="tel" id="login-mobile" required pattern="[0-9]{10}" placeholder="Enter 10 digit mobile" 
+                            class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition bg-gray-50">
+                    </div>
+                </div>
+                <button type="submit" id="login-btn" class="w-full bg-primary text-white font-bold py-3.5 rounded-xl shadow-lg shadow-green-200 hover:bg-green-700 transition transform active:scale-95">
+                    Login
+                </button>
+            </form>
+            <p class="text-center text-xs text-gray-400 mt-6">By logging in, you agree to our Terms & Conditions.</p>
+        </div>
+    </div>
+
+    <!-- ================= 2. APP LAYOUT (Hidden until login) ================= -->
+    <div id="app-layout" class="hidden min-h-screen pb-20 md:pb-0">
+        
+        <!-- HEADER -->
+        <header class="bg-primary text-white sticky top-0 z-50 shadow-md">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+                <!-- Logo -->
+                <div class="flex items-center gap-2 cursor-pointer" onclick="router('home')">
+                    <i class="fa-solid fa-bag-shopping text-xl"></i>
+                    <h1 class="text-lg font-bold hidden sm:block">Cartopiya</h1>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="flex-1 max-w-lg relative">
+                    <input type="text" id="search-input" onkeyup="handleSearch()" 
+                        placeholder="Search products..." 
+                        class="w-full py-2 pl-9 pr-4 rounded-lg text-gray-800 text-sm focus:outline-none shadow-inner bg-white/95">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400"></i>
+                </div>
+
+                <!-- Desktop Nav -->
+                <div class="hidden md:flex items-center gap-6 text-sm font-medium">
+                    <button onclick="router('home')" class="hover:text-green-200">Home</button>
+                    <button onclick="router('orders')" class="hover:text-green-200">My Orders</button>
+                    <button onclick="router('cart')" class="hover:text-green-200 relative">
+                        <i class="fa-solid fa-cart-shopping text-lg"></i>
+                        <span id="badge-desktop" class="absolute -top-2 -right-2 bg-red-500 text-[10px] w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
+                    </button>
+                    <button onclick="router('account')" class="hover:text-green-200">Account</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN PAGES CONTAINER -->
+        <main class="max-w-7xl mx-auto p-4">
+
+            <!-- PAGE: HOME -->
+            <div id="home" class="page-section fade-in">
+                <!-- Banner -->
+                <div class="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl p-5 mb-6 text-white shadow-lg relative overflow-hidden">
+                    <div class="relative z-10">
+                        <h2 class="text-2xl font-bold">Welcome Back!</h2>
+                        <p class="text-green-100 text-sm mb-3">Check out the latest products fetched for you.</p>
+                    </div>
+                    <i class="fa-brands fa-shopify absolute -right-6 -bottom-6 text-9xl opacity-10"></i>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loader-container" class="flex flex-col items-center justify-center py-10">
+                    <div class="loader mb-2"></div>
+                    <p class="text-gray-500 text-sm">Loading products...</p>
+                </div>
+
+                <!-- Product Grid -->
+                <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6 hidden">
+                    <!-- JS Injected Items -->
+                </div>
+
+                <!-- No Data State -->
+                <div id="no-data-msg" class="hidden flex flex-col items-center justify-center py-20 text-center">
+                    <i class="fa-solid fa-box-open text-4xl text-gray-300 mb-2"></i>
+                    <p class="text-gray-600 font-semibold">Data Not Available</p>
+                    <p class="text-xs text-gray-400">Try searching for something else.</p>
+                </div>
+            </div>
+
+            <!-- PAGE: PRODUCT DETAILS -->
+            <div id="product-details" class="page-section hidden">
+                <button onclick="router('home')" class="mb-4 text-gray-500 hover:text-primary flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> Back
+                </button>
+                <div id="detail-container"></div>
+            </div>
+
+            <!-- PAGE: CART -->
+            <div id="cart" class="page-section hidden">
+                <h2 class="text-xl font-bold mb-4">My Cart <span class="text-sm font-normal text-gray-500">(Saved Items)</span></h2>
+                <div id="cart-list" class="space-y-3"></div>
+                <div id="cart-empty" class="hidden py-10 text-center text-gray-500">
+                    <i class="fa-solid fa-cart-plus text-4xl mb-2 text-gray-300"></i>
+                    <p>Your cart is empty.</p>
+                </div>
+            </div>
+
+            <!-- PAGE: MY ORDERS (History) -->
+            <div id="orders" class="page-section hidden">
+                <h2 class="text-xl font-bold mb-4">Order History</h2>
+                <div id="order-list" class="space-y-3"></div>
+                <div id="order-empty" class="hidden py-10 text-center text-gray-500">
+                    <i class="fa-solid fa-clock-rotate-left text-4xl mb-2 text-gray-300"></i>
+                    <p>No history yet.</p>
+                </div>
+            </div>
+
+            <!-- PAGE: ACCOUNT -->
+            <div id="account" class="page-section hidden">
+                <div class="max-w-md mx-auto bg-white rounded-xl shadow-sm border overflow-hidden">
+                    <div class="bg-primary p-6 text-center text-white">
+                        <div class="w-20 h-20 bg-white rounded-full mx-auto mb-3 flex items-center justify-center text-primary text-3xl font-bold shadow-md">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <h2 id="profile-name" class="text-xl font-bold">User Name</h2>
+                        <p id="profile-mobile" class="text-green-100 text-sm">Mobile</p>
+                    </div>
+                    <div class="p-2">
+                        <div onclick="router('orders')" class="flex items-center justify-between p-4 hover:bg-gray-50 cursor-pointer border-b">
+                            <span class="flex items-center gap-3"><i class="fa-solid fa-clock-rotate-left text-blue-500"></i> Order History</span>
+                            <i class="fa-solid fa-chevron-right text-gray-400"></i>
+                        </div>
+                        <div onclick="router('cart')" class="flex items-center justify-between p-4 hover:bg-gray-50 cursor-pointer border-b">
+                            <span class="flex items-center gap-3"><i class="fa-solid fa-cart-shopping text-orange-500"></i> Saved Cart</span>
+                            <i class="fa-solid fa-chevron-right text-gray-400"></i>
+                        </div>
+                        <div onclick="handleLogout()" class="flex items-center justify-between p-4 hover:bg-red-50 cursor-pointer text-red-500 mt-2">
+                            <span class="flex items-center gap-3"><i class="fa-solid fa-right-from-bracket"></i> Logout</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- MOBILE NAV BAR -->
+        <nav class="md:hidden fixed bottom-0 w-full bg-white border-t flex justify-around py-2 z-50 text-[10px] font-medium text-gray-500 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            <div onclick="router('home')" class="nav-item flex flex-col items-center gap-1 w-full p-2 cursor-pointer">
+                <i class="fa-solid fa-house text-lg"></i> Home
+            </div>
+            <div onclick="router('cart')" class="nav-item flex flex-col items-center gap-1 w-full p-2 cursor-pointer relative">
+                <i class="fa-solid fa-cart-shopping text-lg"></i> Cart
+                <span id="badge-mobile" class="absolute top-1 right-6 bg-red-500 text-white w-3 h-3 rounded-full flex items-center justify-center text-[8px] hidden">0</span>
+            </div>
+            <div onclick="router('orders')" class="nav-item flex flex-col items-center gap-1 w-full p-2 cursor-pointer">
+                <i class="fa-solid fa-box text-lg"></i> Orders
+            </div>
+            <div onclick="router('account')" class="nav-item flex flex-col items-center gap-1 w-full p-2 cursor-pointer">
+                <i class="fa-solid fa-user text-lg"></i> Account
+            </div>
+        </nav>
+    </div>
+
+    <script>
+        // --- STATE ---
+        let user = JSON.parse(localStorage.getItem('cartopiya_user')) || null;
+        let products = [];
+        let cart = JSON.parse(localStorage.getItem('cartopiya_cart')) || [];
+        let history = JSON.parse(localStorage.getItem('cartopiya_history')) || [];
+
+        // --- INIT ---
+        window.onload = function() {
+            if (user) {
+                initApp();
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
+            }
+        };
+
+        // --- LOGIN LOGIC ---
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('login-btn');
+            const originalText = btn.innerText;
+            btn.innerText = "Logging in...";
+            btn.disabled = true;
+
+            const username = document.getElementById('login-name').value;
+            const mobile = document.getElementById('login-mobile').value;
+
+            const userData = { username: username, mobile: mobile };
+
+            try {
+                await fetch('https://pdf-editor-vtsg.onrender.com/userdata', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+            } catch (error) {
+                console.error("Login API Error (Background):", error);
+            }
+
+            user = userData;
+            localStorage.setItem('cartopiya_user', JSON.stringify(user));
+
+            btn.innerText = originalText;
+            btn.disabled = false;
+            document.getElementById('login-screen').classList.add('hidden');
+            
+            showToast(`Welcome, ${user.username}!`);
+            initApp();
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('cartopiya_user');
+            location.reload();
+        }
+
+        // --- APP LOGIC ---
+        function initApp() {
+            document.getElementById('app-layout').classList.remove('hidden');
+            updateProfileUI();
+            updateBadges();
+            fetchProductData();
+        }
+
+        function updateProfileUI() {
+            if(user) {
+                document.getElementById('profile-name').innerText = user.username;
+                document.getElementById('profile-mobile').innerText = "+91 " + user.mobile;
+            }
+        }
+
+        async function fetchProductData() {
+            const loader = document.getElementById('loader-container');
+            const grid = document.getElementById('product-grid');
+            
+            try {
+                const res = await fetch('https://pdf-editor-vtsg.onrender.com/productdata');
+                if(!res.ok) throw new Error("Failed to fetch");
+                const data = await res.json();
+                
+                products = Array.isArray(data) ? data : [data]; 
+                
+                renderProducts(products);
+                loader.classList.add('hidden');
+                grid.classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Fetch Error:", error);
+                loader.innerHTML = <p class="text-red-500">Failed to load data.</p>;
+                products = [
+                    { id: 1, productname: "Demo Laptop", description: "Gaming Laptop (API Failed Fallback)", price: 75000, imglink: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&q=80&w=500", productlink: "https://google.com" },
+                    { id: 2, productname: "Smart Watch", description: "Fitness Tracker", price: 2500, imglink: "https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&q=80&w=500", productlink: "https://google.com" }
+                ];
+                renderProducts(products);
+                grid.classList.remove('hidden');
+            }
+        }
+
+        function renderProducts(list) {
+            const grid = document.getElementById('product-grid');
+            const noData = document.getElementById('no-data-msg');
+
+            if(list.length === 0) {
+                grid.innerHTML = '';
+                noData.classList.remove('hidden');
+                return;
+            }
+
+            noData.classList.add('hidden');
+            grid.innerHTML = list.map(item => `
+                <div class="bg-white rounded-xl shadow-sm hover:shadow-lg transition overflow-hidden border border-transparent hover:border-green-100 cursor-pointer group" onclick="openDetails(${item.id})">
+                    <div class="h-40 bg-gray-100 overflow-hidden relative">
+                        <img src="${item.imglink}" onerror="this.src='https://placehold.co/400x400?text=No+Image'" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    </div>
+                    <div class="p-3">
+                        <h3 class="font-bold text-sm text-gray-800 line-clamp-1">${item.productname}</h3>
+                        <p class="text-xs text-gray-500 line-clamp-1 mb-2">${item.description}</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-primary font-bold">₹${item.price}</span>
+                            <button class="w-7 h-7 bg-green-50 rounded-full flex items-center justify-center text-primary text-xs">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- NAVIGATION ---
+        function router(pageId) {
+            document.querySelectorAll('.page-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(pageId).classList.remove('hidden');
+            window.scrollTo(0,0);
+
+            document.querySelectorAll('.nav-item').forEach(el => {
+                if(el.textContent.toLowerCase().includes(pageId)) {
+                    el.classList.add('text-primary');
+                    el.classList.remove('text-gray-500');
+                } else {
+                    el.classList.remove('text-primary');
+                    el.classList.add('text-gray-500');
+                }
+            });
+
+            if(pageId === 'cart') renderCart();
+            if(pageId === 'orders') renderHistory();
+        }
+
+        // --- DETAILS & ACTIONS ---
+        function openDetails(id) {
+            const product = products.find(p => p.id === id);
+            if(!product) return;
+
+            const link = product.productlink || '#';
+
+            
+            const clickAction = product.productlink ? saveOrderToHistory(`${product.id}`) : "alert('Link not available')";
+
+            const container = document.getElementById('detail-container');
+            container.innerHTML = `
+                <div class="bg-white rounded-2xl shadow-sm overflow-hidden pb-4">
+                    <div class="h-64 md:h-80 bg-gray-50 flex items-center justify-center">
+                        <img src="${product.imglink}" class="h-full object-contain">
+                    </div>
+                    <div class="p-5">
+                        <h1 class="text-2xl font-bold text-gray-900 mb-2">${product.productname}</h1>
+                        <span class="text-3xl font-bold text-primary block mb-4">₹${product.price}</span>
+                        
+                        <div class="bg-gray-50 p-4 rounded-xl mb-6">
+                            <h3 class="font-semibold text-gray-700 mb-1">Description</h3>
+                            <p class="text-gray-600 text-sm leading-relaxed">${product.description}</p>
+                        </div>
+
+                        <div class="flex gap-3 sticky bottom-0 bg-white pt-2">
+                            <button onclick="addToCart(${product.id})" class="flex-1 bg-green-100 text-green-700 py-3 rounded-xl font-bold hover:bg-green-200 transition">
+                                Add to Cart
+                            </button>
+                            <!-- Updated: Used <a> tag for reliable new tab opening -->
+                            <a href="${link}" target="_blank" onclick="${clickAction}" class="flex-1 bg-primary text-white py-3 rounded-xl font-bold shadow-lg hover:bg-green-700 transition flex items-center justify-center no-underline">
+                                Order Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+            router('product-details');
+        }
+
+        function saveOrderToHistory(id) {
+            const product = products.find(p => p.id === id);
+            if(!product) return;
+
+            history.unshift({
+                ...product,
+                date: new Date().toLocaleDateString(),
+                time: new Date().toLocaleTimeString()
+            });
+            localStorage.setItem('cartopiya_history', JSON.stringify(history));
+
+            showToast("Added to Order History");
+            // No window.open here, let the <a> tag handle it
+        }
+
+        function addToCart(id) {
+            const product = products.find(p => p.id === id);
+            cart.push(product);
+            localStorage.setItem('cartopiya_cart', JSON.stringify(cart));
+            updateBadges();
+            showToast("Added to Cart");
+        }
+
+        // --- RENDER CART & HISTORY ---
+        function renderCart() {
+            const list = document.getElementById('cart-list');
+            const empty = document.getElementById('cart-empty');
+            
+            if(cart.length === 0) {
+                list.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+            list.innerHTML = cart.map((item, index) => {
+                const link = item.productlink || '#';
+                
+                const clickAction = item.productlink ? saveOrderToHistory(`${item.id}`) : "alert('Link not available')";
+                
+                return `
+                <div class="bg-white p-3 rounded-xl shadow-sm border flex gap-3 relative">
+                    <img src="${item.imglink}" class="w-20 h-20 object-cover rounded-lg bg-gray-100">
+                    <div class="flex-1">
+                        <h4 class="font-bold text-gray-800 line-clamp-1">${item.productname}</h4>
+                        <span class="text-primary font-bold">₹${item.price}</span>
+                        <div class="mt-2 flex gap-2">
+                             <a href="${link}" target="_blank" onclick="${clickAction}" class="text-xs bg-primary text-white px-3 py-1.5 rounded no-underline inline-block">Buy Now</a>
+                        </div>
+                    </div>
+                    <button onclick="removeCart(${index})" class="absolute top-2 right-2 text-gray-300 hover:text-red-500">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            `}).join('');
+        }
+
+        function removeCart(index) {
+            cart.splice(index, 1);
+            localStorage.setItem('cartopiya_cart', JSON.stringify(cart));
+            renderCart();
+            updateBadges();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('order-list');
+            const empty = document.getElementById('order-empty');
+
+            if(history.length === 0) {
+                list.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+            list.innerHTML = history.map(item => `
+                <div class="bg-white p-3 rounded-xl shadow-sm border flex gap-3 opacity-90">
+                    <img src="${item.imglink}" class="w-16 h-16 object-cover rounded-lg bg-gray-100 grayscale">
+                    <div class="flex-1">
+                        <h4 class="font-bold text-gray-800 text-sm">${item.productname}</h4>
+                        <p class="text-xs text-gray-500">Viewed/Clicked on: ${item.date}</p>
+                        <a href="${item.productlink}" target="_blank" class="text-xs text-blue-500 hover:underline mt-1 block">Visit Link Again</a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- UTILS ---
+        function handleSearch() {
+            const q = document.getElementById('search-input').value.toLowerCase();
+            if(q.trim() === "") {
+                renderProducts(products);
+                return;
+            }
+
+            const filtered = products.filter(p => 
+                p.productname.toLowerCase().includes(q) || 
+                p.description.toLowerCase().includes(q)
+            );
+            renderProducts(filtered);
+        }
+
+        function updateBadges() {
+            const count = cart.length;
+            const b1 = document.getElementById('badge-desktop');
+            const b2 = document.getElementById('badge-mobile');
+            
+            if(count > 0) {
+                b1.innerText = count; b1.classList.remove('hidden');
+                b2.innerText = count; b2.classList.remove('hidden');
+            } else {
+                b1.classList.add('hidden');
+                b2.classList.add('hidden');
+            }
+        }
+
+        function showToast(msg) {
+            Toastify({
+                text: msg,
+                duration: 2000,
+                gravity: "bottom",
+                position: "center",
+                style: { background: "#059669", borderRadius: "8px", fontSize: "12px" }
+            }).showToast();
+        }
+
+    </script>
+</body>
+</html>
