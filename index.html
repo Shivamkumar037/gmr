@@ -2,24 +2,79 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cartopiya - Shop Online</title>
-    <!-- Tailwind CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>GMR Service - Professional Task Platform</title>
+    
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
+    
+    <!-- Font Awesome Pro CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Toastify for alerts -->
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
+    <!-- Configuration -->
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        primary: '#059669', // Emerald 600 - Main Green
-                        secondary: '#10b981',
-                        dark: '#064e3b',
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e', // Main Green
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                            950: '#052e16',
+                        },
+                        accent: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6', // Blue
+                            600: '#2563eb',
+                            900: '#1e3a8a',
+                        },
+                        dark: {
+                            800: '#1e293b',
+                            900: '#0f172a',
+                            950: '#020617',
+                        },
+                        surface: '#ffffff',
+                        background: '#f8fafc',
+                    },
+                    fontFamily: {
+                        sans: ['"Manrope"', 'sans-serif'],
+                        display: ['"Outfit"', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'card': '0 0 0 1px rgba(0,0,0,0.03), 0 2px 8px rgba(0,0,0,0.04)',
+                        'card-hover': '0 0 0 1px rgba(0,0,0,0.03), 0 8px 16px rgba(0,0,0,0.08)',
+                        'nav': '0 -4px 20px rgba(0,0,0,0.03)',
+                        'glow': '0 0 20px rgba(34, 197, 94, 0.4)',
+                        'button': '0 4px 6px -1px rgba(34, 197, 94, 0.2), 0 2px 4px -1px rgba(34, 197, 94, 0.1)',
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                        'slide-up': 'slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                        'slide-down': 'slideDown 0.3s ease-out',
+                        'scale-in': 'scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideUp: { '0%': { transform: 'translateY(20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+                        slideDown: { '0%': { transform: 'translateY(-20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+                        scaleIn: { '0%': { transform: 'scale(0.95)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } },
+                        float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-5px)' } },
                     }
                 }
             }
@@ -27,509 +82,963 @@
     </script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        /* Smooth Fade Animation */
-        .fade-in { animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* === RESET & BASE === */
+        :root {
+            --nav-height: 70px;
+            --header-height: 64px;
         }
-        /* Loader */
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #059669; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        body { 
+            background-color: #f8fafc;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Mobile Optimization */
+        .pb-safe { padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 20px); }
+        .pt-safe { padding-top: calc(var(--header-height) + env(safe-area-inset-top)); }
+        
+        /* Interactive Elements */
+        .clickable { cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+        .clickable:active { transform: scale(0.98); }
+
+        /* Loaders */
+        .spinner {
+            width: 24px; height: 24px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Task Images */
+        .img-cover {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .card-container:hover .img-cover { transform: scale(1.05); }
+
+        /* Navigation Active State */
+        .nav-link { 
+            color: #94a3b8; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        .nav-link.active { color: #16a34a; }
+        .nav-link.active i { transform: translateY(-2px); filter: drop-shadow(0 4px 6px rgba(22, 163, 74, 0.2)); }
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 3px;
+            background: #16a34a;
+            border-radius: 10px;
+        }
+
+        /* Modal Transitions */
+        .modal-overlay { transition: opacity 0.3s ease; }
+        .modal-content { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        
+        /* Sticky Details Header Fix */
+        .details-header {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid #f1f5f9;
+        }
     </style>
 </head>
-<body class="text-gray-800">
+<body class="selection:bg-brand-100 selection:text-brand-900">
 
-    <!-- ================= 1. LOGIN SCREEN ================= -->
-    <div id="login-screen" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center p-6 hidden">
-        <div class="w-full max-w-sm">
-            <div class="flex flex-col items-center mb-8">
-                <div class="bg-primary text-white p-4 rounded-2xl shadow-lg mb-4">
-                    <i class="fa-solid fa-bag-shopping text-4xl"></i>
-                </div>
-                <h1 class="text-3xl font-bold text-gray-800 tracking-wide">Cartopiya</h1>
-                <p class="text-gray-500 text-sm mt-1">Shopping made simple</p>
-            </div>
-
-            <form onsubmit="handleLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                    <div class="relative">
-                        <i class="fa-solid fa-user absolute left-3 top-3.5 text-gray-400"></i>
-                        <input type="text" id="login-name" required placeholder="Enter your name" 
-                            class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition bg-gray-50">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
-                    <div class="relative">
-                        <i class="fa-solid fa-phone absolute left-3 top-3.5 text-gray-400"></i>
-                        <input type="tel" id="login-mobile" required pattern="[0-9]{10}" placeholder="Enter 10 digit mobile" 
-                            class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition bg-gray-50">
-                    </div>
-                </div>
-                <button type="submit" id="login-btn" class="w-full bg-primary text-white font-bold py-3.5 rounded-xl shadow-lg shadow-green-200 hover:bg-green-700 transition transform active:scale-95">
-                    Login
-                </button>
-            </form>
-            <p class="text-center text-xs text-gray-400 mt-6">By logging in, you agree to our Terms & Conditions.</p>
-        </div>
-    </div>
-
-    <!-- ================= 2. APP LAYOUT (Hidden until login) ================= -->
-    <div id="app-layout" class="hidden min-h-screen pb-20 md:pb-0">
-        
-        <!-- HEADER -->
-        <header class="bg-primary text-white sticky top-0 z-50 shadow-md">
-            <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-                <!-- Logo -->
-                <div class="flex items-center gap-2 cursor-pointer" onclick="router('home')">
-                    <i class="fa-solid fa-bag-shopping text-xl"></i>
-                    <h1 class="text-lg font-bold hidden sm:block">Cartopiya</h1>
-                </div>
-
-                <!-- Search Bar -->
-                <div class="flex-1 max-w-lg relative">
-                    <input type="text" id="search-input" onkeyup="handleSearch()" 
-                        placeholder="Search products..." 
-                        class="w-full py-2 pl-9 pr-4 rounded-lg text-gray-800 text-sm focus:outline-none shadow-inner bg-white/95">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400"></i>
-                </div>
-
-                <!-- Desktop Nav -->
-                <div class="hidden md:flex items-center gap-6 text-sm font-medium">
-                    <button onclick="router('home')" class="hover:text-green-200">Home</button>
-                    <button onclick="router('orders')" class="hover:text-green-200">My Orders</button>
-                    <button onclick="router('cart')" class="hover:text-green-200 relative">
-                        <i class="fa-solid fa-cart-shopping text-lg"></i>
-                        <span id="badge-desktop" class="absolute -top-2 -right-2 bg-red-500 text-[10px] w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
-                    </button>
-                    <button onclick="router('account')" class="hover:text-green-200">Account</button>
-                </div>
-            </div>
-        </header>
-
-        <!-- MAIN PAGES CONTAINER -->
-        <main class="max-w-7xl mx-auto p-4">
-
-            <!-- PAGE: HOME -->
-            <div id="home" class="page-section fade-in">
-                <!-- Banner -->
-                <div class="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl p-5 mb-6 text-white shadow-lg relative overflow-hidden">
-                    <div class="relative z-10">
-                        <h2 class="text-2xl font-bold">Welcome Back!</h2>
-                        <p class="text-green-100 text-sm mb-3">Check out the latest products fetched for you.</p>
-                    </div>
-                    <i class="fa-brands fa-shopify absolute -right-6 -bottom-6 text-9xl opacity-10"></i>
-                </div>
-
-                <!-- Loading State -->
-                <div id="loader-container" class="flex flex-col items-center justify-center py-10">
-                    <div class="loader mb-2"></div>
-                    <p class="text-gray-500 text-sm">Loading products...</p>
-                </div>
-
-                <!-- Product Grid -->
-                <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6 hidden">
-                    <!-- JS Injected Items -->
-                </div>
-
-                <!-- No Data State -->
-                <div id="no-data-msg" class="hidden flex flex-col items-center justify-center py-20 text-center">
-                    <i class="fa-solid fa-box-open text-4xl text-gray-300 mb-2"></i>
-                    <p class="text-gray-600 font-semibold">Data Not Available</p>
-                    <p class="text-xs text-gray-400">Try searching for something else.</p>
-                </div>
-            </div>
-
-            <!-- PAGE: PRODUCT DETAILS -->
-            <div id="product-details" class="page-section hidden">
-                <button onclick="router('home')" class="mb-4 text-gray-500 hover:text-primary flex items-center gap-2">
-                    <i class="fa-solid fa-arrow-left"></i> Back
-                </button>
-                <div id="detail-container"></div>
-            </div>
-
-            <!-- PAGE: CART -->
-            <div id="cart" class="page-section hidden">
-                <h2 class="text-xl font-bold mb-4">My Cart <span class="text-sm font-normal text-gray-500">(Saved Items)</span></h2>
-                <div id="cart-list" class="space-y-3"></div>
-                <div id="cart-empty" class="hidden py-10 text-center text-gray-500">
-                    <i class="fa-solid fa-cart-plus text-4xl mb-2 text-gray-300"></i>
-                    <p>Your cart is empty.</p>
-                </div>
-            </div>
-
-            <!-- PAGE: MY ORDERS (History) -->
-            <div id="orders" class="page-section hidden">
-                <h2 class="text-xl font-bold mb-4">Order History</h2>
-                <div id="order-list" class="space-y-3"></div>
-                <div id="order-empty" class="hidden py-10 text-center text-gray-500">
-                    <i class="fa-solid fa-clock-rotate-left text-4xl mb-2 text-gray-300"></i>
-                    <p>No history yet.</p>
-                </div>
-            </div>
-
-            <!-- PAGE: ACCOUNT -->
-            <div id="account" class="page-section hidden">
-                <div class="max-w-md mx-auto bg-white rounded-xl shadow-sm border overflow-hidden">
-                    <div class="bg-primary p-6 text-center text-white">
-                        <div class="w-20 h-20 bg-white rounded-full mx-auto mb-3 flex items-center justify-center text-primary text-3xl font-bold shadow-md">
-                            <i class="fa-solid fa-user"></i>
-                        </div>
-                        <h2 id="profile-name" class="text-xl font-bold">User Name</h2>
-                        <p id="profile-mobile" class="text-green-100 text-sm">Mobile</p>
-                    </div>
-                    <div class="p-2">
-                        <div onclick="router('orders')" class="flex items-center justify-between p-4 hover:bg-gray-50 cursor-pointer border-b">
-                            <span class="flex items-center gap-3"><i class="fa-solid fa-clock-rotate-left text-blue-500"></i> Order History</span>
-                            <i class="fa-solid fa-chevron-right text-gray-400"></i>
-                        </div>
-                        <div onclick="router('cart')" class="flex items-center justify-between p-4 hover:bg-gray-50 cursor-pointer border-b">
-                            <span class="flex items-center gap-3"><i class="fa-solid fa-cart-shopping text-orange-500"></i> Saved Cart</span>
-                            <i class="fa-solid fa-chevron-right text-gray-400"></i>
-                        </div>
-                        <div onclick="handleLogout()" class="flex items-center justify-between p-4 hover:bg-red-50 cursor-pointer text-red-500 mt-2">
-                            <span class="flex items-center gap-3"><i class="fa-solid fa-right-from-bracket"></i> Logout</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </main>
-
-        <!-- MOBILE NAV BAR -->
-        <nav class="md:hidden fixed bottom-0 w-full bg-white border-t flex justify-around py-2 z-50 text-[10px] font-medium text-gray-500 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-            <div onclick="router('home')" class="nav-item flex flex-col items-center gap-1 w-full p-2 cursor-pointer">
-                <i class="fa-solid fa-house text-lg"></i> Home
-            </div>
-            <div onclick="router('cart')" class="nav-item flex flex-col items-center gap-1 w-full p-2 cursor-pointer relative">
-                <i class="fa-solid fa-cart-shopping text-lg"></i> Cart
-                <span id="badge-mobile" class="absolute top-1 right-6 bg-red-500 text-white w-3 h-3 rounded-full flex items-center justify-center text-[8px] hidden">0</span>
-            </div>
-            <div onclick="router('orders')" class="nav-item flex flex-col items-center gap-1 w-full p-2 cursor-pointer">
-                <i class="fa-solid fa-box text-lg"></i> Orders
-            </div>
-            <div onclick="router('account')" class="nav-item flex flex-col items-center gap-1 w-full p-2 cursor-pointer">
-                <i class="fa-solid fa-user text-lg"></i> Account
-            </div>
-        </nav>
-    </div>
-
+    <!-- === JAVASCRIPT LOGIC ENGINE === -->
     <script>
-        // --- STATE ---
-        let user = JSON.parse(localStorage.getItem('cartopiya_user')) || null;
-        let products = [];
-        let cart = JSON.parse(localStorage.getItem('cartopiya_cart')) || [];
-        let history = JSON.parse(localStorage.getItem('cartopiya_history')) || [];
+        // --- 1. SYSTEM CONFIGURATION ---
+        const SYS = {
+            version: '4.2.0-Pro',
+            currency: '₹',
+            minWithdraw: 500,
+            animationDuration: 300,
+            mockDelay: 1500
+        };
 
-        // --- INIT ---
-        window.onload = function() {
-            if (user) {
-                initApp();
-            } else {
-                document.getElementById('login-screen').classList.remove('hidden');
+        // --- 2. STATE MANAGEMENT ---
+        let AppState = JSON.parse(localStorage.getItem('gmr_pro_v4_state')) || {
+            user: {
+                id: 'USR-' + Math.floor(Math.random() * 1000000),
+                name: null,
+                mobile: null,
+                email: null,
+                joined: new Date().toISOString(),
+                isLoggedIn: false,
+                vipTier: 'Starter'
+            },
+            wallet: {
+                // --- INITIAL BALANCE (Change this value to test) ---
+                balance: 0.00, 
+                // --------------------------------------------------
+                pending: 0.00,
+                totalWithdrawn: 0.00,
+                paymentFailures: 0
+            },
+            tasks: {
+                completed: [], // Array of IDs
+                dailyCount: 0,
+                lastReset: new Date().toDateString()
+            },
+            history: [] // Transactions
+        };
+
+        // --- 3. MOCK DATABASE (EXTENSIVE) ---
+        const MOCK_DB = {
+            tasks: [],
+            leaderboard: [],
+            faqs: [
+                {q: "Is my payment guaranteed?", a: "Yes, we use secure IMPS/NEFT transfers. Payments are processed within 24 hours."},
+                {q: "How to increase earnings?", a: "Upgrade your VIP tier or refer friends to earn 10% of their earnings forever."},
+                {q: "Why did verification fail?", a: "Ensure your screenshot clearly shows your 5-star rating and the review text."},
+                {q: "What is the minimum withdrawal?", a: "The minimum withdrawal amount is ₹500. There are no fees for withdrawal."}
+            ]
+        };
+
+        // Generate Tasks Function
+        function generateMockData() {
+            if(MOCK_DB.tasks.length > 0) return;
+
+            const places = ["Starbucks", "KFC", "McDonalds", "Subway", "Dominos", "Pizza Hut", "Burger King", "Taco Bell", "Dunkin Donuts", "Barista", "Cafe Coffee Day", "Haldirams", "Bikanervala", "Sagar Ratna", "Saravana Bhavan"];
+            const cities = ["Delhi", "Mumbai", "Bangalore", "Pune", "Hyderabad", "Chennai", "Kolkata", "Jaipur", "Lucknow", "Chandigarh"];
+            const types = ["Restaurant", "Cafe", "Gym", "Hotel", "Mall", "Salon", "Clinic"];
+
+            for(let i=0; i<50; i++) {
+                const place = places[Math.floor(Math.random() * places.length)];
+                const city = cities[Math.floor(Math.random() * cities.length)];
+                const type = types[Math.floor(Math.random() * types.length)];
+                
+                MOCK_DB.tasks.push({
+                    id: `TASK-${1000+i}`,
+                    title: `${place} ${type}`,
+                    subtitle: `${city} Branch`,
+                    reward: (Math.random() * (40 - 15) + 15).toFixed(2),
+                    category: type,
+                    image: `https://source.unsplash.com/random/400x300/?${type.toLowerCase()},store`, // Placeholder
+                    imgUrl: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500&q=80", // Static fallback
+                    copyText: `Excellent service at ${place}! The staff was courteous and the ambiance was perfect. Highly recommended for everyone in ${city}. ⭐⭐⭐⭐⭐`
+                });
+            }
+
+            // Generate Leaderboard
+            for(let i=0; i<10; i++) {
+                MOCK_DB.leaderboard.push({
+                    rank: i+1,
+                    name: `User_${Math.floor(Math.random()*9000)+1000}`,
+                    amount: (Math.random() * (50000 - 5000) + 5000).toFixed(0)
+                });
+            }
+        }
+
+        // --- 4. CORE CONTROLLER ---
+
+        const Controller = {
+            init: function() {
+                generateMockData();
+                this.checkAuth();
+            },
+
+            checkAuth: function() {
+                const splash = document.getElementById('splash-screen');
+                const auth = document.getElementById('auth-view');
+                const app = document.getElementById('app-view');
+
+                setTimeout(() => {
+                    splash.classList.add('hidden');
+                    if (AppState.user.isLoggedIn) {
+                        auth.classList.add('hidden');
+                        app.classList.remove('hidden');
+                        UI.updateAll();
+                        Router.navigate('home');
+                    } else {
+                        auth.classList.remove('hidden');
+                        app.classList.add('hidden');
+                    }
+                }, 2000);
+            },
+
+            login: async function(e) {
+                e.preventDefault();
+                const btn = document.getElementById('btn-login');
+                const name = document.getElementById('inp-name').value;
+                const mobile = document.getElementById('inp-mobile').value;
+                const email = document.getElementById('inp-email').value;
+
+                if (!name || mobile.length < 10 || !email.includes('@')) {
+                    UI.showToast("Please enter valid details", "error");
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerHTML = '<div class="spinner"></div>';
+
+                await new Promise(r => setTimeout(r, 1500));
+
+                AppState.user.name = name;
+                AppState.user.mobile = mobile;
+                AppState.user.email = email;
+                AppState.user.isLoggedIn = true;
+                
+                this.save();
+                window.location.reload(); // Fresh start
+            },
+
+            logout: function() {
+                if (confirm("Are you sure you want to log out? Local data will be preserved.")) {
+                    AppState.user.isLoggedIn = false;
+                    this.save();
+                    window.location.reload();
+                }
+            },
+
+            save: function() {
+                localStorage.setItem('gmr_pro_v4_state', JSON.stringify(AppState));
+                UI.updateAll();
             }
         };
 
-        // --- LOGIN LOGIC ---
-        async function handleLogin(e) {
-            e.preventDefault();
-            const btn = document.getElementById('login-btn');
-            const originalText = btn.innerText;
-            btn.innerText = "Logging in...";
-            btn.disabled = true;
+        // --- 5. UI MANAGER ---
 
-            const username = document.getElementById('login-name').value;
-            const mobile = document.getElementById('login-mobile').value;
-
-            const userData = { username: username, mobile: mobile };
-
-            try {
-                await fetch('https://pdf-editor-vtsg.onrender.com/userdata', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(userData)
-                });
-            } catch (error) {
-                console.error("Login API Error (Background):", error);
-            }
-
-            user = userData;
-            localStorage.setItem('cartopiya_user', JSON.stringify(user));
-
-            btn.innerText = originalText;
-            btn.disabled = false;
-            document.getElementById('login-screen').classList.add('hidden');
-            
-            showToast(`Welcome, ${user.username}!`);
-            initApp();
-        }
-
-        function handleLogout() {
-            localStorage.removeItem('cartopiya_user');
-            location.reload();
-        }
-
-        // --- APP LOGIC ---
-        function initApp() {
-            document.getElementById('app-layout').classList.remove('hidden');
-            updateProfileUI();
-            updateBadges();
-            fetchProductData();
-        }
-
-        function updateProfileUI() {
-            if(user) {
-                document.getElementById('profile-name').innerText = user.username;
-                document.getElementById('profile-mobile').innerText = "+91 " + user.mobile;
-            }
-        }
-
-        async function fetchProductData() {
-            const loader = document.getElementById('loader-container');
-            const grid = document.getElementById('product-grid');
-            
-            try {
-                const res = await fetch('https://pdf-editor-vtsg.onrender.com/productdata');
-                if(!res.ok) throw new Error("Failed to fetch");
-                const data = await res.json();
+        const UI = {
+            updateAll: function() {
+                // Update Balances
+                document.querySelectorAll('.val-balance').forEach(el => el.innerText = SYS.currency + parseFloat(AppState.wallet.balance).toFixed(2));
+                document.querySelectorAll('.val-pending').forEach(el => el.innerText = SYS.currency + parseFloat(AppState.wallet.pending).toFixed(2));
                 
-                products = Array.isArray(data) ? data : [data]; 
-                
-                renderProducts(products);
-                loader.classList.add('hidden');
-                grid.classList.remove('hidden');
-
-            } catch (error) {
-                console.error("Fetch Error:", error);
-                loader.innerHTML = <p class="text-red-500">Failed to load data.</p>;
-                products = [
-                    { id: 1, productname: "Demo Laptop", description: "Gaming Laptop (API Failed Fallback)", price: 75000, imglink: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&q=80&w=500", productlink: "https://google.com" },
-                    { id: 2, productname: "Smart Watch", description: "Fitness Tracker", price: 2500, imglink: "https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&q=80&w=500", productlink: "https://google.com" }
-                ];
-                renderProducts(products);
-                grid.classList.remove('hidden');
-            }
-        }
-
-        function renderProducts(list) {
-            const grid = document.getElementById('product-grid');
-            const noData = document.getElementById('no-data-msg');
-
-            if(list.length === 0) {
-                grid.innerHTML = '';
-                noData.classList.remove('hidden');
-                return;
-            }
-
-            noData.classList.add('hidden');
-            grid.innerHTML = list.map(item => `
-                <div class="bg-white rounded-xl shadow-sm hover:shadow-lg transition overflow-hidden border border-transparent hover:border-green-100 cursor-pointer group" onclick="openDetails(${item.id})">
-                    <div class="h-40 bg-gray-100 overflow-hidden relative">
-                        <img src="${item.imglink}" onerror="this.src='https://placehold.co/400x400?text=No+Image'" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
-                    </div>
-                    <div class="p-3">
-                        <h3 class="font-bold text-sm text-gray-800 line-clamp-1">${item.productname}</h3>
-                        <p class="text-xs text-gray-500 line-clamp-1 mb-2">${item.description}</p>
-                        <div class="flex justify-between items-center">
-                            <span class="text-primary font-bold">₹${item.price}</span>
-                            <button class="w-7 h-7 bg-green-50 rounded-full flex items-center justify-center text-primary text-xs">
-                                <i class="fa-solid fa-chevron-right"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // --- NAVIGATION ---
-        function router(pageId) {
-            document.querySelectorAll('.page-section').forEach(el => el.classList.add('hidden'));
-            document.getElementById(pageId).classList.remove('hidden');
-            window.scrollTo(0,0);
-
-            document.querySelectorAll('.nav-item').forEach(el => {
-                if(el.textContent.toLowerCase().includes(pageId)) {
-                    el.classList.add('text-primary');
-                    el.classList.remove('text-gray-500');
-                } else {
-                    el.classList.remove('text-primary');
-                    el.classList.add('text-gray-500');
+                // Update User Info
+                if (AppState.user.name) {
+                    document.querySelectorAll('.val-username').forEach(el => el.innerText = AppState.user.name);
+                    document.querySelectorAll('.val-userid').forEach(el => el.innerText = AppState.user.id);
+                    document.querySelectorAll('.val-mobile').forEach(el => el.innerText = AppState.user.mobile);
+                    document.querySelectorAll('.val-email').forEach(el => el.innerText = AppState.user.email);
                 }
-            });
 
-            if(pageId === 'cart') renderCart();
-            if(pageId === 'orders') renderHistory();
-        }
+                // Task Badge
+                const pendingTasks = MOCK_DB.tasks.length - AppState.tasks.completed.length;
+                document.querySelectorAll('.val-task-count').forEach(el => el.innerText = pendingTasks);
+            },
 
-        // --- DETAILS & ACTIONS ---
-        function openDetails(id) {
-            const product = products.find(p => p.id === id);
-            if(!product) return;
+            showToast: function(msg, type='success') {
+                const toast = document.getElementById('toast');
+                const content = document.getElementById('toast-msg');
+                const icon = document.getElementById('toast-icon');
 
-            const link = product.productlink || '#';
+                content.innerText = msg;
+                toast.className = `fixed top-6 right-6 z-[200] transform transition-all duration-300 translate-y-0 opacity-100 flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl border-l-4 min-w-[320px] bg-white ${type === 'error' ? 'border-red-500' : type === 'warning' ? 'border-orange-500' : 'border-green-500'}`;
+                
+                icon.className = type === 'error' ? 'fa-solid fa-circle-xmark text-red-500 text-xl' : type === 'warning' ? 'fa-solid fa-triangle-exclamation text-orange-500 text-xl' : 'fa-solid fa-circle-check text-green-500 text-xl';
 
+                toast.classList.remove('hidden', '-translate-y-10', 'opacity-0');
+                
+                setTimeout(() => {
+                    toast.classList.add('-translate-y-10', 'opacity-0');
+                    setTimeout(() => toast.classList.add('hidden'), 300);
+                }, 3000);
+            }
+        };
+
+        // --- 6. ROUTER ---
+
+        const Router = {
+            current: 'home',
             
-            const clickAction = product.productlink ? saveOrderToHistory(`${product.id}`) : "alert('Link not available')";
+            navigate: function(pageId) {
+                // Hide all views
+                document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+                document.getElementById(pageId).classList.remove('hidden');
+                
+                // Update Nav State (Mobile)
+                document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+                const activeLink = document.querySelector(`.nav-link[data-target="${pageId}"]`);
+                if(activeLink) activeLink.classList.add('active');
 
-            const container = document.getElementById('detail-container');
-            container.innerHTML = `
-                <div class="bg-white rounded-2xl shadow-sm overflow-hidden pb-4">
-                    <div class="h-64 md:h-80 bg-gray-50 flex items-center justify-center">
-                        <img src="${product.imglink}" class="h-full object-contain">
-                    </div>
-                    <div class="p-5">
-                        <h1 class="text-2xl font-bold text-gray-900 mb-2">${product.productname}</h1>
-                        <span class="text-3xl font-bold text-primary block mb-4">₹${product.price}</span>
-                        
-                        <div class="bg-gray-50 p-4 rounded-xl mb-6">
-                            <h3 class="font-semibold text-gray-700 mb-1">Description</h3>
-                            <p class="text-gray-600 text-sm leading-relaxed">${product.description}</p>
+                // Update Nav State (Desktop)
+                document.querySelectorAll('.desktop-nav-link').forEach(el => {
+                    el.classList.remove('text-brand-600', 'bg-brand-50');
+                    if(el.dataset.target === pageId) el.classList.add('text-brand-600', 'bg-brand-50');
+                });
+
+                this.current = pageId;
+                window.scrollTo(0,0);
+
+                // Initialize Page Logic
+                if (pageId === 'home') Render.home();
+                if (pageId === 'tasks') Render.tasks();
+                if (pageId === 'wallet') Render.wallet();
+                if (pageId === 'profile') Render.profile();
+            }
+        };
+
+        // --- 7. RENDERERS ---
+
+        const Render = {
+            home: function() {
+                // Stats updates handled by UI.updateAll()
+            },
+
+            tasks: function() {
+                const container = document.getElementById('task-list');
+                container.innerHTML = '';
+
+                MOCK_DB.tasks.forEach(task => {
+                    const isDone = AppState.tasks.completed.includes(task.id);
+                    const el = document.createElement('div');
+                    el.className = `card-container bg-white p-4 rounded-2xl shadow-card hover:shadow-card-hover border border-gray-100 transition-all duration-300 flex flex-col md:flex-row gap-4 ${isDone ? 'opacity-60 grayscale' : ''}`;
+                    
+                    el.innerHTML = `
+                        <div class="w-full md:w-48 h-32 md:h-32 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 relative">
+                            <img src="${task.imgUrl}" class="img-cover">
+                            <div class="absolute top-2 left-2 bg-white/90 backdrop-blur px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider text-gray-600">
+                                ${task.category}
+                            </div>
                         </div>
+                        <div class="flex-grow flex flex-col justify-between">
+                            <div>
+                                <div class="flex justify-between items-start">
+                                    <h3 class="font-bold text-gray-800 text-lg line-clamp-1">${task.title}</h3>
+                                    <span class="text-brand-600 font-extrabold text-lg">${SYS.currency}${task.reward}</span>
+                                </div>
+                                <p class="text-sm text-gray-500 mt-1">${task.subtitle} • 5 Star Rating Required</p>
+                            </div>
+                            <div class="mt-4 flex items-center justify-between">
+                                <div class="flex items-center gap-2 text-xs text-gray-400">
+                                    <i class="fa-solid fa-clock"></i> 2 mins
+                                    <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                    <i class="fa-solid fa-shield-check"></i> Verified
+                                </div>
+                                <button onclick="${isDone ? '' : `TaskFlow.open('${task.id}')`}" class="px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 ${isDone ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-900 text-white hover:bg-black hover:shadow-button active:scale-95'}">
+                                    ${isDone ? 'Completed' : 'Start Task'}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(el);
+                });
+            },
 
-                        <div class="flex gap-3 sticky bottom-0 bg-white pt-2">
-                            <button onclick="addToCart(${product.id})" class="flex-1 bg-green-100 text-green-700 py-3 rounded-xl font-bold hover:bg-green-200 transition">
-                                Add to Cart
+            wallet: function() {
+                const container = document.getElementById('wallet-view-content');
+                
+                // 3 Failures Condition -> QR View
+                if(AppState.wallet.paymentFailures >= 3) {
+                    container.innerHTML = `
+                        <div class="bg-white p-8 rounded-3xl shadow-card border-2 border-red-50 text-center animate-fade-in max-w-lg mx-auto">
+                            <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6 text-red-500 text-3xl animate-pulse">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold text-gray-900 mb-2">Verification Required</h2>
+                            <p class="text-gray-500 text-sm mb-8 leading-relaxed">
+                                Automated transfers to your account have failed 3 times. To prevent fraud and verify your active status, a manual confirmation is required.
+                            </p>
+                            
+                            <div class="bg-gray-50 p-6 rounded-2xl border border-dashed border-gray-300 mb-8 inline-block">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=verify@gmr&pn=GMRVerify&am=1.00" class="w-48 h-48 opacity-90 mix-blend-multiply mx-auto">
+                                <p class="text-xs font-bold text-gray-400 mt-4 uppercase tracking-widest">Scan to Pay ₹1.00</p>
+                            </div>
+
+                            <div class="bg-blue-50 p-4 rounded-xl text-left flex items-start gap-3 mb-8">
+                                <i class="fa-solid fa-circle-info text-blue-600 mt-1"></i>
+                                <p class="text-xs text-blue-800 font-medium">This ₹1.00 amount is for verification only and will be refunded instantly along with your full withdrawal balance.</p>
+                            </div>
+
+                            <button onclick="TaskFlow.manualVerify()" id="btn-qr-confirm" class="w-full bg-brand-600 text-white font-bold py-4 rounded-xl shadow-glow hover:bg-brand-700 transition active:scale-[0.98]">
+                                I Have Paid ₹1.00
                             </button>
-                            <!-- Updated: Used <a> tag for reliable new tab opening -->
-                            <a href="${link}" target="_blank" onclick="${clickAction}" class="flex-1 bg-primary text-white py-3 rounded-xl font-bold shadow-lg hover:bg-green-700 transition flex items-center justify-center no-underline">
-                                Order Now
-                            </a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Normal Flow (Form or Low Balance)
+                const isLowBalance = AppState.wallet.balance < SYS.minWithdraw;
+                
+                container.innerHTML = `
+                    <div class="grid md:grid-cols-2 gap-6 animate-slide-up">
+                        <!-- Stats Card -->
+                        <div class="bg-gray-900 text-white p-8 rounded-3xl relative overflow-hidden shadow-xl">
+                            <div class="absolute top-0 right-0 w-64 h-64 bg-brand-500 rounded-full mix-blend-multiply filter blur-[64px] opacity-20 -translate-y-1/2 translate-x-1/2"></div>
+                            <div class="relative z-10">
+                                <p class="text-gray-400 font-bold text-xs uppercase tracking-wider mb-2">Available Balance</p>
+                                <h1 class="text-5xl font-black mb-8 val-balance tracking-tight">₹0.00</h1>
+                                <div class="grid grid-cols-2 gap-4 pt-6 border-t border-gray-800">
+                                    <div>
+                                        <p class="text-gray-400 text-xs mb-1">Withdrawn</p>
+                                        <p class="font-bold text-lg">₹${AppState.wallet.totalWithdrawn.toFixed(2)}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-400 text-xs mb-1">Pending</p>
+                                        <p class="font-bold text-lg text-yellow-400">₹${AppState.wallet.pending.toFixed(2)}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Card -->
+                        <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-card flex flex-col justify-center">
+                            ${isLowBalance ? `
+                                <div class="text-center">
+                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+                                        <i class="fa-solid fa-lock text-2xl"></i>
+                                    </div>
+                                    <h3 class="font-bold text-xl text-gray-800 mb-2">Withdrawal Locked</h3>
+                                    <p class="text-sm text-gray-500 mb-6">Minimum balance required: <strong>${SYS.currency}${SYS.minWithdraw}</strong></p>
+                                    <div class="w-full bg-gray-100 rounded-full h-3 mb-2 overflow-hidden">
+                                        <div class="bg-brand-500 h-full rounded-full transition-all duration-1000" style="width: ${(AppState.wallet.balance/SYS.minWithdraw)*100}%"></div>
+                                    </div>
+                                    <p class="text-xs text-gray-400 font-bold text-right">${Math.floor((AppState.wallet.balance/SYS.minWithdraw)*100)}% Completed</p>
+                                </div>
+                            ` : `
+                                <form onsubmit="TaskFlow.withdraw(event)" class="space-y-4">
+                                    <h3 class="font-bold text-xl text-gray-800 mb-4">Bank Details</h3>
+                                    <div class="space-y-4">
+                                        <input type="text" required placeholder="Account Holder Name" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-brand-500 focus:bg-white transition-all">
+                                        <input type="number" required placeholder="Account Number" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-brand-500 focus:bg-white transition-all">
+                                        <input type="text" required placeholder="IFSC Code" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-brand-500 focus:bg-white transition-all uppercase">
+                                    </div>
+                                    <button id="btn-withdraw" type="submit" class="w-full bg-brand-600 text-white font-bold py-4 rounded-xl shadow-button hover:bg-brand-700 transition active:scale-[0.98] mt-2">
+                                        Withdraw Now
+                                    </button>
+                                    ${AppState.wallet.paymentFailures > 0 ? `<p class="text-xs text-red-500 text-center font-bold mt-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Connection Retry ${AppState.wallet.paymentFailures}/3</p>` : ''}
+                                </form>
+                            `}
                         </div>
                     </div>
-                </div>
-            `;
-            router('product-details');
-        }
 
-        function saveOrderToHistory(id) {
-            const product = products.find(p => p.id === id);
-            if(!product) return;
-
-            history.unshift({
-                ...product,
-                date: new Date().toLocaleDateString(),
-                time: new Date().toLocaleTimeString()
-            });
-            localStorage.setItem('cartopiya_history', JSON.stringify(history));
-
-            showToast("Added to Order History");
-            // No window.open here, let the <a> tag handle it
-        }
-
-        function addToCart(id) {
-            const product = products.find(p => p.id === id);
-            cart.push(product);
-            localStorage.setItem('cartopiya_cart', JSON.stringify(cart));
-            updateBadges();
-            showToast("Added to Cart");
-        }
-
-        // --- RENDER CART & HISTORY ---
-        function renderCart() {
-            const list = document.getElementById('cart-list');
-            const empty = document.getElementById('cart-empty');
-            
-            if(cart.length === 0) {
-                list.innerHTML = '';
-                empty.classList.remove('hidden');
-                return;
-            }
-
-            empty.classList.add('hidden');
-            list.innerHTML = cart.map((item, index) => {
-                const link = item.productlink || '#';
-                
-                const clickAction = item.productlink ? saveOrderToHistory(`${item.id}`) : "alert('Link not available')";
-                
-                return `
-                <div class="bg-white p-3 rounded-xl shadow-sm border flex gap-3 relative">
-                    <img src="${item.imglink}" class="w-20 h-20 object-cover rounded-lg bg-gray-100">
-                    <div class="flex-1">
-                        <h4 class="font-bold text-gray-800 line-clamp-1">${item.productname}</h4>
-                        <span class="text-primary font-bold">₹${item.price}</span>
-                        <div class="mt-2 flex gap-2">
-                             <a href="${link}" target="_blank" onclick="${clickAction}" class="text-xs bg-primary text-white px-3 py-1.5 rounded no-underline inline-block">Buy Now</a>
+                    <!-- Transactions List -->
+                    <div class="mt-8 bg-white rounded-3xl p-6 shadow-card border border-gray-100">
+                        <h3 class="font-bold text-gray-800 mb-4 text-lg">Recent Activity</h3>
+                        <div class="space-y-0 divide-y divide-gray-50">
+                            ${AppState.history.length === 0 ? '<p class="text-center text-gray-400 py-8 text-sm">No transactions yet</p>' : AppState.history.map(tx => `
+                                <div class="flex justify-between items-center py-4">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-10 h-10 rounded-full flex items-center justify-center ${tx.type === 'credit' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}">
+                                            <i class="fa-solid ${tx.type === 'credit' ? 'fa-arrow-down' : 'fa-arrow-up'} text-sm"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-bold text-gray-800">${tx.title}</p>
+                                            <p class="text-xs text-gray-400">${tx.date}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-bold ${tx.type === 'credit' ? 'text-green-600' : 'text-gray-900'}">${tx.type === 'credit' ? '+' : '-'} ${SYS.currency}${tx.amount}</p>
+                                        <p class="text-[10px] font-bold uppercase tracking-wider ${tx.status === 'Success' ? 'text-green-500' : 'text-orange-400'}">${tx.status}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
-                    <button onclick="removeCart(${index})" class="absolute top-2 right-2 text-gray-300 hover:text-red-500">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                </div>
-            `}).join('');
-        }
+                `;
+            },
 
-        function removeCart(index) {
-            cart.splice(index, 1);
-            localStorage.setItem('cartopiya_cart', JSON.stringify(cart));
-            renderCart();
-            updateBadges();
-        }
-
-        function renderHistory() {
-            const list = document.getElementById('order-list');
-            const empty = document.getElementById('order-empty');
-
-            if(history.length === 0) {
-                list.innerHTML = '';
-                empty.classList.remove('hidden');
-                return;
+            profile: function() {
+                // Profile is mostly static, specific updates handled by UI
             }
+        };
 
-            empty.classList.add('hidden');
-            list.innerHTML = history.map(item => `
-                <div class="bg-white p-3 rounded-xl shadow-sm border flex gap-3 opacity-90">
-                    <img src="${item.imglink}" class="w-16 h-16 object-cover rounded-lg bg-gray-100 grayscale">
-                    <div class="flex-1">
-                        <h4 class="font-bold text-gray-800 text-sm">${item.productname}</h4>
-                        <p class="text-xs text-gray-500">Viewed/Clicked on: ${item.date}</p>
-                        <a href="${item.productlink}" target="_blank" class="text-xs text-blue-500 hover:underline mt-1 block">Visit Link Again</a>
-                    </div>
-                </div>
-            `).join('');
-        }
+        // --- 8. TASK WORKFLOW ---
 
-        // --- UTILS ---
-        function handleSearch() {
-            const q = document.getElementById('search-input').value.toLowerCase();
-            if(q.trim() === "") {
-                renderProducts(products);
-                return;
+        let currentTaskId = null;
+
+        const TaskFlow = {
+            open: function(id) {
+                currentTaskId = id;
+                const task = MOCK_DB.tasks.find(t => t.id === id);
+                
+                // Populate Modal
+                document.getElementById('dt-title').innerText = task.title;
+                document.getElementById('dt-reward').innerText = SYS.currency + task.reward;
+                document.getElementById('dt-copy').innerText = task.copyText;
+                document.getElementById('dt-img').src = task.imgUrl;
+                
+                // Reset State
+                document.getElementById('task-proof-input').value = '';
+                const btn = document.getElementById('btn-verify-task');
+                btn.disabled = false;
+                btn.innerHTML = 'Submit for Verification';
+                btn.className = "w-full bg-brand-600 text-white font-bold py-4 rounded-xl shadow-button hover:bg-brand-700 transition active:scale-[0.98]";
+
+                // Show Section
+                document.getElementById('task-details-view').classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // Lock scroll
+            },
+
+            close: function() {
+                document.getElementById('task-details-view').classList.add('hidden');
+                document.body.style.overflow = '';
+            },
+
+            copyText: function() {
+                const text = document.getElementById('dt-copy').innerText;
+                navigator.clipboard.writeText(text);
+                UI.showToast("Review text copied!");
+            },
+
+            verify: async function(e) {
+                e.preventDefault();
+                const btn = document.getElementById('btn-verify-task');
+                const file = document.getElementById('task-proof-input');
+
+                if (file.files.length === 0) {
+                    UI.showToast("Please upload a screenshot", "warning");
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerHTML = '<div class="spinner border-brand-200 border-t-white mx-auto"></div>';
+
+                await new Promise(r => setTimeout(r, 2000));
+
+                if (Math.random() > 0.1) {
+                    // Success
+                    const task = MOCK_DB.tasks.find(t => t.id === currentTaskId);
+                    const amount = parseFloat(task.reward);
+                    
+                    AppState.wallet.balance += amount;
+                    AppState.tasks.completed.push(currentTaskId);
+                    AppState.history.unshift({
+                        title: task.title,
+                        amount: amount.toFixed(2),
+                        type: 'credit',
+                        date: new Date().toLocaleDateString(),
+                        status: 'Success'
+                    });
+                    
+                    Controller.save();
+                    this.close();
+                    UI.showToast(`Success! ${SYS.currency}${amount} added.`, "success");
+                    Router.navigate('tasks'); // Refresh
+                } else {
+                    // Fail
+                    UI.showToast("Verification failed. Image unclear.", "error");
+                    btn.disabled = false;
+                    btn.innerHTML = 'Retry Verification';
+                }
+            },
+
+            withdraw: async function(e) {
+                e.preventDefault();
+                const btn = document.getElementById('btn-withdraw');
+                btn.disabled = true;
+                btn.innerHTML = '<div class="spinner mx-auto border-gray-400 border-t-white"></div>';
+
+                await new Promise(r => setTimeout(r, 2000));
+
+                AppState.wallet.paymentFailures++;
+                Controller.save();
+
+                if (AppState.wallet.paymentFailures < 3) {
+                    UI.showToast("Server Error: Bank Gateway Timeout.", "error");
+                    Render.wallet(); // Re-render to show error/form
+                } else {
+                    UI.showToast("Security Verification Required.", "warning");
+                    Render.wallet(); // Will render QR state
+                }
+            },
+
+            manualVerify: async function() {
+                const btn = document.getElementById('btn-qr-confirm');
+                btn.disabled = true;
+                btn.innerHTML = '<div class="spinner mx-auto border-brand-200 border-t-white"></div>';
+
+                await new Promise(r => setTimeout(r, 3000));
+
+                // Reset and Process
+                AppState.wallet.balance = 0;
+                AppState.wallet.paymentFailures = 0;
+                AppState.wallet.totalWithdrawn += parseFloat(AppState.wallet.balance);
+                
+                AppState.history.unshift({
+                    title: 'Bank Withdrawal (Verified)',
+                    amount: AppState.wallet.balance.toFixed(2),
+                    type: 'debit',
+                    date: new Date().toLocaleDateString(),
+                    status: 'Processing'
+                });
+
+                Controller.save();
+                UI.showToast("Verification Successful. Transfer Initiated.", "success");
+                Render.wallet(); // Back to form
             }
+        };
 
-            const filtered = products.filter(p => 
-                p.productname.toLowerCase().includes(q) || 
-                p.description.toLowerCase().includes(q)
-            );
-            renderProducts(filtered);
-        }
-
-        function updateBadges() {
-            const count = cart.length;
-            const b1 = document.getElementById('badge-desktop');
-            const b2 = document.getElementById('badge-mobile');
-            
-            if(count > 0) {
-                b1.innerText = count; b1.classList.remove('hidden');
-                b2.innerText = count; b2.classList.remove('hidden');
-            } else {
-                b1.classList.add('hidden');
-                b2.classList.add('hidden');
-            }
-        }
-
-        function showToast(msg) {
-            Toastify({
-                text: msg,
-                duration: 2000,
-                gravity: "bottom",
-                position: "center",
-                style: { background: "#059669", borderRadius: "8px", fontSize: "12px" }
-            }).showToast();
-        }
+        // --- 9. INITIALIZATION ---
+        window.addEventListener('load', () => {
+            Controller.init();
+        });
 
     </script>
+
+    <!-- === VIEW LAYER === -->
+
+    <!-- SPLASH SCREEN -->
+    <div id="splash-screen" class="fixed inset-0 bg-dark-950 z-[1000] flex flex-col items-center justify-center text-white transition-opacity duration-500">
+        <div class="w-16 h-16 bg-brand-500 rounded-2xl flex items-center justify-center mb-6 animate-pulse-slow shadow-glow">
+            <i class="fa-solid fa-cube text-3xl"></i>
+        </div>
+        <h1 class="text-4xl font-black tracking-tight">GMR<span class="text-brand-500">.Pro</span></h1>
+        <p class="text-gray-500 text-xs font-bold tracking-[0.4em] mt-3 uppercase">Enterprise</p>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="hidden fixed top-0 right-0 z-[200] opacity-0 transition-all duration-300">
+        <i id="toast-icon"></i>
+        <p id="toast-msg" class="text-sm font-bold text-gray-800 ml-2">Message</p>
+    </div>
+
+    <!-- AUTH VIEW -->
+    <div id="auth-view" class="hidden fixed inset-0 z-50 bg-white flex flex-col md:flex-row">
+        <!-- Banner Image (Desktop) -->
+        <div class="hidden md:block w-1/2 h-full bg-dark-900 relative overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=1200&q=80" class="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay">
+            <div class="absolute inset-0 flex flex-col justify-end p-12 text-white">
+                <h2 class="text-5xl font-black mb-4">Earn More.<br>Work Less.</h2>
+                <p class="text-lg text-gray-300 max-w-md">Join the world's most premium task automation platform and start earning today.</p>
+            </div>
+        </div>
+        
+        <!-- Form -->
+        <div class="w-full md:w-1/2 h-full overflow-y-auto p-8 md:p-16 flex items-center justify-center">
+            <div class="w-full max-w-md">
+                <div class="mb-10">
+                    <div class="w-12 h-12 bg-brand-500 rounded-xl flex items-center justify-center text-white text-xl shadow-lg mb-6">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <h1 class="text-3xl font-black text-gray-900 mb-2">Welcome Back</h1>
+                    <p class="text-gray-500">Enter your details to access your dashboard.</p>
+                </div>
+
+                <form onsubmit="Controller.login(event)" class="space-y-5">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Full Name</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-user absolute left-4 top-4 text-gray-400"></i>
+                            <input id="inp-name" type="text" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3.5 pl-11 pr-4 font-medium focus:bg-white focus:border-brand-500 focus:outline-none transition-all placeholder-gray-400" placeholder="e.g. Rahul Sharma">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Mobile Number</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-phone absolute left-4 top-4 text-gray-400"></i>
+                            <input id="inp-mobile" type="tel" maxlength="10" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3.5 pl-11 pr-4 font-medium focus:bg-white focus:border-brand-500 focus:outline-none transition-all placeholder-gray-400" placeholder="10-digit number">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Email Address</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-envelope absolute left-4 top-4 text-gray-400"></i>
+                            <input id="inp-email" type="email" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3.5 pl-11 pr-4 font-medium focus:bg-white focus:border-brand-500 focus:outline-none transition-all placeholder-gray-400" placeholder="name@example.com">
+                        </div>
+                    </div>
+
+                    <button id="btn-login" type="submit" class="w-full bg-gray-900 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-black transition transform active:scale-[0.98] mt-4">
+                        Secure Login <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </button>
+                </form>
+                
+                <p class="text-center text-xs text-gray-400 mt-8 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-shield-halved"></i> 256-bit Bank Grade Security
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- APP VIEW -->
+    <div id="app-view" class="hidden min-h-screen flex flex-col md:flex-row">
+        
+        <!-- SIDEBAR (DESKTOP) -->
+        <aside class="hidden md:flex w-72 bg-white border-r border-gray-100 flex-col fixed h-full z-30">
+            <div class="p-8">
+                <div class="flex items-center gap-3 mb-10">
+                    <div class="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                        <i class="fa-solid fa-cube text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-black text-xl leading-none text-gray-900">GMR</h1>
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Workspace</span>
+                    </div>
+                </div>
+
+                <nav class="space-y-2">
+                    <button onclick="Router.navigate('home')" data-target="home" class="desktop-nav-link w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-gray-500 font-medium hover:bg-gray-50 transition text-sm text-brand-600 bg-brand-50">
+                        <i class="fa-solid fa-house text-lg w-6"></i> Dashboard
+                    </button>
+                    <button onclick="Router.navigate('tasks')" data-target="tasks" class="desktop-nav-link w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-gray-500 font-medium hover:bg-gray-50 transition text-sm">
+                        <i class="fa-solid fa-list-check text-lg w-6"></i> Available Tasks
+                    </button>
+                    <button onclick="Router.navigate('wallet')" data-target="wallet" class="desktop-nav-link w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-gray-500 font-medium hover:bg-gray-50 transition text-sm">
+                        <i class="fa-solid fa-wallet text-lg w-6"></i> My Wallet
+                    </button>
+                    <button onclick="Router.navigate('profile')" data-target="profile" class="desktop-nav-link w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-gray-500 font-medium hover:bg-gray-50 transition text-sm">
+                        <i class="fa-solid fa-user text-lg w-6"></i> Profile
+                    </button>
+                </nav>
+            </div>
+
+            <div class="mt-auto p-8 border-t border-gray-100">
+                <div class="bg-gray-900 rounded-2xl p-5 text-white shadow-xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-brand-500 rounded-full filter blur-[40px] opacity-30 -translate-y-1/2 translate-x-1/2"></div>
+                    <p class="text-xs text-gray-400 font-bold uppercase mb-1">Balance</p>
+                    <h2 class="text-2xl font-black val-balance">₹0.00</h2>
+                    <button onclick="Router.navigate('wallet')" class="w-full mt-4 bg-white/10 backdrop-blur border border-white/10 text-xs font-bold py-2 rounded-lg hover:bg-white/20 transition">Withdraw</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <div class="flex-grow md:ml-72 bg-slate-50 min-h-screen pb-safe">
+            
+            <!-- HEADER (MOBILE ONLY) -->
+            <header class="md:hidden bg-white/90 backdrop-blur-md sticky top-0 z-30 border-b border-gray-200 px-4 py-3 flex justify-between items-center h-[var(--header-height)]">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white text-sm shadow-sm">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <span class="font-bold text-lg text-gray-900 tracking-tight">GMR<span class="text-brand-600">Pro</span></span>
+                </div>
+                <div class="bg-gray-900 text-white px-3 py-1.5 rounded-full flex items-center gap-2 shadow-lg clickable" onclick="Router.navigate('wallet')">
+                    <i class="fa-solid fa-wallet text-xs text-brand-400"></i>
+                    <span class="text-xs font-bold val-balance">₹0.00</span>
+                </div>
+            </header>
+
+            <!-- CONTENT WRAPPER -->
+            <div class="p-4 md:p-10 max-w-6xl mx-auto space-y-8">
+                
+                <!-- VIEW: HOME -->
+                <div id="home" class="view-section animate-fade-in space-y-8">
+                    <!-- Header Text (Desktop) -->
+                    <div class="hidden md:block">
+                        <h1 class="text-3xl font-black text-gray-900">Dashboard</h1>
+                        <p class="text-gray-500">Welcome back, <span class="val-username font-bold text-gray-800">User</span></p>
+                    </div>
+
+                    <!-- Hero Card -->
+                    <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-6 md:p-10 text-white relative overflow-hidden shadow-2xl">
+                        <div class="absolute top-0 right-0 w-64 h-64 bg-brand-500 rounded-full mix-blend-multiply filter blur-[80px] opacity-20 translate-x-1/2 -translate-y-1/2"></div>
+                        <div class="relative z-10 flex flex-col md:flex-row justify-between md:items-end gap-6">
+                            <div>
+                                <span class="inline-block bg-white/10 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-3 border border-white/10">Premium Member</span>
+                                <h2 class="text-3xl md:text-5xl font-black mb-2">Start Earning</h2>
+                                <p class="text-gray-400 text-sm md:text-base max-w-md">Complete simple verification tasks and get paid instantly to your bank account.</p>
+                            </div>
+                            <button onclick="Router.navigate('tasks')" class="bg-white text-gray-900 px-8 py-3.5 rounded-xl font-bold shadow-lg hover:bg-gray-100 transition active:scale-95 self-start md:self-end">
+                                View Tasks <i class="fa-solid fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Metrics -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                            <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-3">
+                                <i class="fa-solid fa-list-check"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-900 val-task-count">0</p>
+                            <p class="text-xs text-gray-400 font-bold uppercase">Pending</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                            <div class="w-10 h-10 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-3">
+                                <i class="fa-solid fa-indian-rupee-sign"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-900 val-balance">₹0</p>
+                            <p class="text-xs text-gray-400 font-bold uppercase">Balance</p>
+                        </div>
+                        <!-- Add more cards for desktop look -->
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hidden md:block">
+                            <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mb-3">
+                                <i class="fa-solid fa-trophy"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-900">#842</p>
+                            <p class="text-xs text-gray-400 font-bold uppercase">Rank</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hidden md:block">
+                            <div class="w-10 h-10 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center mb-3">
+                                <i class="fa-solid fa-star"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-900">4.9</p>
+                            <p class="text-xs text-gray-400 font-bold uppercase">Rating</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: TASKS -->
+                <div id="tasks" class="view-section hidden animate-fade-in space-y-6">
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">Available Tasks</h2>
+                            <p class="text-sm text-gray-500">Tasks refresh every 24 hours.</p>
+                        </div>
+                        <!-- Filters Desktop -->
+                        <div class="hidden md:flex gap-2">
+                            <button class="px-4 py-2 bg-gray-900 text-white rounded-lg text-xs font-bold">All</button>
+                            <button class="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg text-xs font-bold">High Pay</button>
+                        </div>
+                    </div>
+                    
+                    <div id="task-list" class="space-y-4 pb-20">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+
+                <!-- VIEW: WALLET -->
+                <div id="wallet" class="view-section hidden animate-fade-in space-y-6">
+                    <h2 class="text-2xl font-bold text-gray-900 md:hidden">Wallet</h2>
+                    <div id="wallet-view-content">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+
+                <!-- VIEW: PROFILE -->
+                <div id="profile" class="view-section hidden animate-fade-in space-y-6">
+                    <h2 class="text-2xl font-bold text-gray-900 md:hidden">Profile</h2>
+                    
+                    <div class="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm">
+                        <div class="h-32 bg-gradient-to-r from-brand-500 to-brand-700 relative">
+                            <div class="absolute -bottom-10 left-8 p-1 bg-white rounded-full">
+                                <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 text-3xl">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pt-12 px-8 pb-8">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h2 class="text-2xl font-bold text-gray-900 val-username">User</h2>
+                                    <p class="text-gray-500 text-sm val-email">user@example.com</p>
+                                </div>
+                                <span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">VIP Member</span>
+                            </div>
+                            
+                            <div class="mt-8 grid md:grid-cols-2 gap-6">
+                                <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                    <p class="text-xs text-gray-400 font-bold uppercase">Mobile Number</p>
+                                    <p class="font-bold text-gray-800 val-mobile">--</p>
+                                </div>
+                                <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                    <p class="text-xs text-gray-400 font-bold uppercase">User ID</p>
+                                    <p class="font-mono text-gray-800 val-userid">--</p>
+                                </div>
+                            </div>
+
+                            <button onclick="Controller.logout()" class="mt-8 px-6 py-3 border border-red-100 text-red-500 font-bold rounded-xl hover:bg-red-50 transition text-sm">
+                                Sign Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- TASK DETAIL MODAL (FULL SCREEN MOBILE, CENTERED DESKTOP) -->
+        <div id="task-details-view" class="hidden fixed inset-0 z-[100] bg-white md:bg-black/50 md:backdrop-blur-sm flex justify-center items-center">
+            <div class="w-full h-full md:h-auto md:max-h-[90vh] md:w-[500px] md:rounded-3xl bg-white flex flex-col md:overflow-hidden relative">
+                
+                <!-- HEADER (Sticky on Mobile, Static on Desktop) -->
+                <div class="details-header px-4 py-3 flex items-center gap-4">
+                    <button onclick="TaskFlow.close()" class="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition">
+                        <i class="fa-solid fa-arrow-left text-gray-600"></i>
+                    </button>
+                    <span class="font-bold text-lg text-gray-900">Task Details</span>
+                </div>
+
+                <!-- SCROLLABLE CONTENT -->
+                <div class="flex-grow overflow-y-auto p-0 md:p-6 pb-24 md:pb-6">
+                    <div class="relative h-56 bg-gray-200 md:rounded-2xl overflow-hidden mb-6">
+                        <img id="dt-img" src="" class="img-cover">
+                        <div class="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-black/80 to-transparent"></div>
+                        <div class="absolute bottom-4 left-4 text-white">
+                            <h2 id="dt-title" class="text-2xl font-bold leading-none mb-1">Title</h2>
+                            <p class="text-sm opacity-90 font-medium text-brand-300" id="dt-reward">₹0.00</p>
+                        </div>
+                    </div>
+
+                    <div class="px-4 md:px-0 space-y-6">
+                        <!-- Step 1 -->
+                        <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-xl">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-[10px] font-bold bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded uppercase">Step 1</span>
+                                <button onclick="TaskFlow.copyText()" class="text-xs font-bold text-yellow-700 hover:underline"><i class="fa-regular fa-copy mr-1"></i> Copy</button>
+                            </div>
+                            <p id="dt-copy" class="text-sm text-gray-700 italic bg-white p-2 rounded border border-yellow-100 select-all">...</p>
+                        </div>
+
+                        <!-- Step 2 -->
+                        <div>
+                            <span class="text-[10px] font-bold bg-gray-200 text-gray-600 px-2 py-0.5 rounded uppercase mb-2 inline-block">Step 2</span>
+                            <a href="https://maps.google.com" target="_blank" class="flex items-center justify-center gap-2 w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-black transition">
+                                Open Google Maps <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                            </a>
+                        </div>
+
+                        <!-- Step 3 -->
+                        <div>
+                            <span class="text-[10px] font-bold bg-brand-200 text-brand-800 px-2 py-0.5 rounded uppercase mb-2 inline-block">Step 3</span>
+                            <label class="block w-full border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:bg-gray-50 hover:border-brand-300 transition group relative">
+                                <input type="file" id="task-proof-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                <div class="w-12 h-12 bg-gray-100 group-hover:bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-2 text-gray-400 group-hover:text-brand-500 transition">
+                                    <i class="fa-solid fa-cloud-arrow-up text-xl"></i>
+                                </div>
+                                <p class="text-sm font-bold text-gray-600">Upload Screenshot</p>
+                                <p class="text-xs text-gray-400">PNG, JPG up to 5MB</p>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FIXED FOOTER ACTION -->
+                <div class="p-4 border-t border-gray-100 bg-white absolute bottom-0 w-full md:relative md:rounded-b-3xl">
+                    <button onclick="TaskFlow.verify(event)" id="btn-verify-task" class="w-full bg-brand-600 text-white font-bold py-4 rounded-xl shadow-button hover:bg-brand-700 transition active:scale-[0.98]">
+                        Submit for Verification
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MOBILE BOTTOM NAV -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-40 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+        <div class="flex justify-around items-center h-[var(--nav-height)] px-2">
+            <button onclick="Router.navigate('home')" data-target="home" class="nav-link active flex-1 flex flex-col items-center justify-center h-full">
+                <i class="fa-solid fa-house text-xl mb-1"></i>
+                <span class="text-[10px] font-bold">Home</span>
+            </button>
+            <button onclick="Router.navigate('tasks')" data-target="tasks" class="nav-link flex-1 flex flex-col items-center justify-center h-full">
+                <i class="fa-solid fa-layer-group text-xl mb-1"></i>
+                <span class="text-[10px] font-bold">Tasks</span>
+            </button>
+            <button onclick="Router.navigate('wallet')" data-target="wallet" class="nav-link flex-1 flex flex-col items-center justify-center h-full">
+                <i class="fa-solid fa-wallet text-xl mb-1"></i>
+                <span class="text-[10px] font-bold">Wallet</span>
+            </button>
+            <button onclick="Router.navigate('profile')" data-target="profile" class="nav-link flex-1 flex flex-col items-center justify-center h-full">
+                <i class="fa-solid fa-user text-xl mb-1"></i>
+                <span class="text-[10px] font-bold">Profile</span>
+            </button>
+        </div>
+    </nav>
+
 </body>
 </html>
