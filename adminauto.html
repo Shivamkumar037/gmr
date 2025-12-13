@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GMR Admin | Auto Task Generator</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: { 500: '#3b82f6', 600: '#2563eb' } }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f8fafc; color: #1e293b; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .sidebar { width: 260px; transition: all 0.3s; }
+        .nav-item.active { background: #f1f5f9; border-left: 3px solid #2563eb; color: #2563eb; }
+        .spinner { width: 20px; height: 20px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .modal { opacity: 0; pointer-events: none; transition: 0.2s; }
+        .modal.open { opacity: 1; pointer-events: auto; }
+        .modal-content { transform: scale(0.95); transition: 0.2s; }
+        .modal.open .modal-content { transform: scale(1); }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <script>
+        const API_BASE_URL = "https://gmrback-1.onrender.com/api"; 
+
+        // --- AUTO GENERATOR DATA ---
+        const PLACES = ["Mumbai", "Delhi", "Goa", "Jaipur", "Manali", "Kerala", "Ladakh", "Varanasi", "Agra", "Udaipur", "Pune", "Bangalore", "Shimla", "Rishikesh", "Ooty", "Darjeeling", "Mysore", "Amritsar", "Jaisalmer", "Kolkata"];
+        let autoGenInterval = null;
+        let genCount = 0;
+
+        const App = {
+            token: localStorage.getItem('admin_token'),
+            user: JSON.parse(localStorage.getItem('admin_user') || 'null'),
+            
+            async request(endpoint, method = 'GET', body = null, isFile = false) {
+                const headers = {};
+                if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+                if (!isFile) headers['Content-Type'] = 'application/json';
+                const config = { method, headers };
+                if (body) config.body = isFile ? body : JSON.stringify(body);
+                const res = await fetch(`${API_BASE_URL}${endpoint}`, config);
+                if (res.status === 401) { this.logout(); throw new Error("Session Expired"); }
+                return await res.json();
+            },
+
+            async login(e) {
+                e.preventDefault();
+                const btn = document.getElementById('btn-login');
+                btn.innerHTML = '<div class="spinner"></div>';
+                try {
+                    const res = await this.request('/auth/connect', 'POST', { 
+                        mobile: document.getElementById('l-mobile').value, 
+                        password: document.getElementById('l-pass').value 
+                    });
+                    if (res.user.role !== 'ROLE_ADMIN' && res.user.role !== 'ADMIN') throw new Error("Not Admin");
+                    localStorage.setItem('admin_token', res.token);
+                    this.token = res.token;
+                    location.reload();
+                } catch (err) { Swal.fire("Error", err.message, "error"); btn.innerHTML = 'Login'; }
+            },
+
+            logout() { localStorage.clear(); location.reload(); },
+
+            checkAuth() {
+                if (this.token) {
+                    document.getElementById('auth-screen').classList.add('hidden');
+                    document.getElementById('admin-screen').classList.remove('hidden');
+                    this.loadDashboard();
+                } else {
+                    document.getElementById('auth-screen').classList.remove('hidden');
+                }
+            },
+
+            // --- DASHBOARD ---
+            async loadDashboard() {
+                try {
+                    const stats = await this.request('/admin/dashboard');
+                    document.getElementById('stat-users').innerText = stats.totalUsers || 0;
+                    document.getElementById('stat-tasks').innerText = stats.totalTasks || 0;
+                    document.getElementById('stat-withdraw').innerText = stats.pendingWithdrawals || 0;
+                    this.loadWithdrawals();
+                    this.loadTasks();
+                    this.loadUsers();
+                } catch(e){}
+            },
+
+            // --- AUTO GENERATOR LOGIC ---
+            async startAutoMode() {
+                const btn = document.getElementById('btn-auto-gen');
+                
+                if (autoGenInterval) {
+                    clearInterval(autoGenInterval);
+                    autoGenInterval = null;
+                    btn.innerHTML = '⚡ Start Auto Gen (50)';
+                    btn.classList.remove('bg-red-600');
+                    btn.classList.add('bg-purple-600');
+                    Swal.fire("Stopped", "Auto generation stopped.", "info");
+                    return;
+                }
+
+                genCount = 0;
+                btn.innerHTML = '⏹ Stop Generator';
+                btn.classList.remove('bg-purple-600');
+                btn.classList.add('bg-red-600');
+                
+                Swal.fire({
+                    toast: true, position: 'top-end', icon: 'success', 
+                    title: 'Auto Generator Started! Tasks creating every 20s...',
+                    showConfirmButton: false, timer: 3000
+                });
+
+                // Immediate First Run
+                await this.generateRandomTask();
+
+                // Loop
+                autoGenInterval = setInterval(async () => {
+                    if (genCount >= 50) {
+                        clearInterval(autoGenInterval);
+                        autoGenInterval = null;
+                        btn.innerHTML = '⚡ Start Auto Gen (50)';
+                        btn.classList.remove('bg-red-600');
+                        btn.classList.add('bg-purple-600');
+                        Swal.fire("Completed", "50 Tasks Generated Successfully!", "success");
+                        return;
+                    }
+                    await this.generateRandomTask();
+                }, 20000); // 20 Seconds
+            },
+
+            async generateRandomTask() {
+                try {
+                    genCount++;
+                    const place = PLACES[Math.floor(Math.random() * PLACES.length)];
+                    const reward = Math.floor(Math.random() * 11) + 5; // 5 to 15
+                    
+                    // Generate Unique Image Blob (Canvas) to ensure upload works
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 400; canvas.height = 300;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = `#${Math.floor(Math.random()*16777215).toString(16)}`; // Random Color
+                    ctx.fillRect(0, 0, 400, 300);
+                    ctx.fillStyle = "#ffffff";
+                    ctx.font = "bold 40px Arial";
+                    ctx.textAlign = "center";
+                    ctx.fillText(place, 200, 150);
+                    ctx.font = "20px Arial";
+                    ctx.fillText("₹" + reward, 200, 190);
+                    
+                    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg'));
+                    const file = new File([blob], `${place}_task.jpg`, { type: 'image/jpeg' });
+
+                    const formData = new FormData();
+                    formData.append('title', `Review: ${place}`);
+                    formData.append('description', `Post a 5-star review for ${place} on Google Maps.`);
+                    formData.append('reward', reward);
+                    formData.append('actionUrl', `https://www.google.com/maps/search/${place}`);
+                    formData.append('file', file);
+
+                    await this.request('/admin/tasks', 'POST', formData, true);
+                    
+                    // Update UI Counter
+                    document.getElementById('btn-auto-gen').innerText = `⏹ Stop (${genCount}/50)`;
+                    this.loadTasks(); // Live Refresh
+                    
+                    // Toast Notification
+                    const toast = Swal.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false, timer: 3000 });
+                    toast.fire({ icon: 'success', title: `Task #${genCount}: ${place} Created!` });
+
+                } catch (e) {
+                    console.error("Auto Gen Error:", e);
+                }
+            },
+
+            // --- MANUAL TASK CREATE ---
+            async createTask(e) {
+                e.preventDefault();
+                const btn = document.getElementById('btn-create-task');
+                btn.disabled = true; btn.innerHTML = 'Uploading...';
+
+                const formData = new FormData();
+                formData.append('title', document.getElementById('t-title').value);
+                formData.append('description', document.getElementById('t-desc').value);
+                formData.append('reward', document.getElementById('t-reward').value);
+                formData.append('actionUrl', document.getElementById('t-url').value);
+                const file = document.getElementById('t-file').files[0];
+                if(file) formData.append('file', file);
+
+                try {
+                    await this.request('/admin/tasks', 'POST', formData, true);
+                    UI.toast('Task Created', 'success');
+                    UI.modal('modal-create-task', false);
+                    this.loadTasks();
+                } catch(err) { Swal.fire("Error", err.message, "error"); } 
+                finally { btn.disabled = false; btn.innerHTML = 'Create Task'; }
+            },
+
+            async loadTasks() {
+                const tasks = await this.request('/tasks');
+                document.getElementById('task-list-admin').innerHTML = tasks.map(t => `
+                    <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <img src="${t.imageUrl}" class="w-10 h-10 rounded-lg bg-gray-100 object-cover">
+                            <div><h4 class="font-bold text-sm text-gray-800">${t.title}</h4><p class="text-xs text-gray-500">₹${t.rewardAmount}</p></div>
+                        </div>
+                        <button onclick="App.deleteTask(${t.id})" class="text-red-500 hover:bg-red-50 p-2 rounded"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `).join('');
+            },
+
+            async deleteTask(id) {
+                if(confirm('Delete Task?')) {
+                    await this.request(`/admin/tasks/${id}`, 'DELETE');
+                    this.loadTasks();
+                }
+            },
+
+            // --- WITHDRAWALS ---
+            async loadWithdrawals() {
+                const list = await this.request('/admin/withdrawals/pending');
+                const tbody = document.getElementById('table-withdrawals');
+                if (list.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-400">No Pending Requests</td></tr>`; return; }
+                tbody.innerHTML = list.map(item => `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                        <td class="p-4"><p class="font-bold text-sm">${item.user.fullName}</p><p class="text-xs text-gray-500">${item.user.mobile}</p></td>
+                        <td class="p-4 font-bold text-gray-700">₹${item.amount}</td>
+                        <td class="p-4 text-xs font-mono bg-blue-50 text-blue-600 px-2 py-1 rounded w-fit">${item.upiId}</td>
+                        <td class="p-4 flex gap-2">
+                            <button onclick="App.processWithdraw(${item.id}, 'approve')" class="w-8 h-8 rounded bg-green-100 text-green-600"><i class="fa-solid fa-check"></i></button>
+                            <button onclick="App.processWithdraw(${item.id}, 'reject')" class="w-8 h-8 rounded bg-red-100 text-red-600"><i class="fa-solid fa-xmark"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+            },
+            async processWithdraw(id, action) {
+                if(confirm(`Confirm ${action}?`)) {
+                    await this.request(`/admin/withdrawals/${id}/${action}`, 'POST');
+                    UI.toast('Updated', 'success');
+                    this.loadWithdrawals();
+                }
+            },
+
+            // --- USERS ---
+            async loadUsers() {
+                try {
+                    const list = await this.request('/admin/users');
+                    const tbody = document.getElementById('table-users');
+                    if (list.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-400">No users found.</td></tr>`; return; }
+                    tbody.innerHTML = list.map(u => `
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="p-4 font-bold text-sm text-gray-700">${u.fullName}</td>
+                            <td class="p-4 text-xs font-mono text-gray-500">${u.mobile}</td>
+                            <td class="p-4 font-bold text-green-600">₹${u.walletBalance.toFixed(2)}</td>
+                            <td class="p-4 font-bold text-gray-600">₹${u.totalEarned || 0}</td>
+                            <td class="p-4"><button class="text-red-500 hover:text-red-700"><i class="fa-solid fa-ban"></i></button></td>
+                        </tr>
+                    `).join('');
+                } catch(e) {}
+            },
+
+            // --- UI HELPERS ---
+            switchTab(id) {
+                document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+                document.getElementById(`view-${id}`).classList.remove('hidden');
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                document.getElementById(`nav-${id}`).classList.add('active');
+            },
+            toggleModal(id, show) {
+                const el = document.getElementById(id);
+                show ? el.classList.add('open') : el.classList.remove('open');
+            }
+        };
+
+        const UI = {
+            toast(msg, icon) { Swal.fire({ toast: true, position: 'top-end', icon: icon, title: msg, showConfirmButton: false, timer: 2000 }); },
+            modal(id, show) { App.toggleModal(id, show); }
+        };
+
+        window.onload = () => App.checkAuth();
+    </script>
+
+    <div id="auth-screen" class="hidden fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm p-8 rounded-3xl shadow-2xl text-center">
+            <h2 class="text-2xl font-black text-slate-800 mb-6">Admin Login</h2>
+            <form onsubmit="App.login(event)" class="space-y-4">
+                <input type="text" id="l-mobile" class="w-full bg-gray-50 border p-3 rounded-xl font-bold" placeholder="ID">
+                <input type="password" id="l-pass" class="w-full bg-gray-50 border p-3 rounded-xl font-bold" placeholder="Password">
+                <button id="btn-login" class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold">Sign In</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="admin-screen" class="hidden w-full h-full flex">
+        <aside class="sidebar bg-white border-r border-gray-200 h-full flex flex-col z-20 shadow-xl">
+            <div class="h-[70px] flex items-center px-6 border-b border-gray-100 font-black text-xl text-slate-900">GMR Admin</div>
+            <nav class="flex-1 p-4 space-y-1">
+                <button onclick="App.switchTab('dashboard')" id="nav-dashboard" class="nav-item active w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-600"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</button>
+                <button onclick="App.switchTab('users')" id="nav-users" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-600"><i class="fa-solid fa-users w-5"></i> Users</button>
+                <button onclick="App.switchTab('withdrawals')" id="nav-withdrawals" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-600"><i class="fa-solid fa-money-bill-transfer w-5"></i> Withdrawals</button>
+                <button onclick="App.switchTab('tasks')" id="nav-tasks" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-600"><i class="fa-solid fa-list-check w-5"></i> Tasks</button>
+            </nav>
+            <div class="p-4"><button onclick="App.logout()" class="w-full text-red-500 font-bold text-sm">Logout</button></div>
+        </aside>
+
+        <main class="flex-1 flex flex-col h-full bg-slate-50 overflow-hidden">
+            <header class="h-[70px] bg-white border-b px-8 flex items-center justify-between shadow-sm">
+                <h2 class="font-bold text-gray-700">Control Center</h2>
+                <span class="text-xs font-bold text-green-600 flex items-center gap-2"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Online</span>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-8 space-y-8">
+                <div id="view-dashboard" class="view-section space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border"><p class="text-xs font-bold text-gray-400 uppercase">Users</p><h3 id="stat-users" class="text-3xl font-black mt-1">0</h3></div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border"><p class="text-xs font-bold text-gray-400 uppercase">Pending</p><h3 id="stat-withdraw" class="text-3xl font-black text-orange-500 mt-1">0</h3></div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border"><p class="text-xs font-bold text-gray-400 uppercase">Tasks</p><h3 id="stat-tasks" class="text-3xl font-black text-green-600 mt-1">0</h3></div>
+                    </div>
+                </div>
+
+                <div id="view-users" class="view-section hidden space-y-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Users Directory</h2>
+                    <div class="bg-white rounded-2xl border overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 border-b"><tr><th class="p-4 text-xs font-bold uppercase">Name</th><th class="p-4 text-xs font-bold uppercase">Mobile</th><th class="p-4 text-xs font-bold uppercase">Wallet</th><th class="p-4 text-xs font-bold uppercase">Earned</th><th class="p-4 text-xs font-bold uppercase">Action</th></tr></thead>
+                            <tbody id="table-users"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="view-withdrawals" class="view-section hidden space-y-6">
+                    <div class="flex justify-between"><h2 class="text-2xl font-bold text-gray-800">Pending Requests</h2><button onclick="App.loadWithdrawals()" class="text-blue-600 font-bold">Refresh</button></div>
+                    <div class="bg-white rounded-2xl border overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 border-b"><tr><th class="p-4 text-xs font-bold uppercase">User</th><th class="p-4 text-xs font-bold uppercase">Amount</th><th class="p-4 text-xs font-bold uppercase">UPI</th><th class="p-4 text-xs font-bold uppercase">Action</th></tr></thead>
+                            <tbody id="table-withdrawals"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="view-tasks" class="view-section hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-gray-800">Task Manager</h2>
+                        <div class="flex gap-3">
+                            <button onclick="App.startAutoMode()" id="btn-auto-gen" class="bg-purple-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg hover:bg-purple-700 transition flex items-center gap-2">
+                                <i class="fa-solid fa-bolt"></i> ⚡ Start Auto Gen (50)
+                            </button>
+                            <button onclick="UI.modal('modal-create-task', true)" class="bg-slate-900 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg hover:bg-black transition">
+                                <i class="fa-solid fa-plus"></i> Create Task
+                            </button>
+                        </div>
+                    </div>
+                    <div id="task-list-admin" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="modal-create-task" class="modal fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4">
+        <div class="modal-content bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl">
+            <h3 class="font-bold text-xl mb-4">New Task</h3>
+            <form id="form-task" onsubmit="App.createTask(event)" class="space-y-4">
+                <input type="text" id="t-title" class="w-full border p-3 rounded-xl outline-none" placeholder="Title" required>
+                <textarea id="t-desc" class="w-full border p-3 rounded-xl outline-none" placeholder="Description" required></textarea>
+                <input type="text" id="t-url" class="w-full border p-3 rounded-xl outline-none" placeholder="Link (https://...)" required>
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" id="t-reward" class="w-full border p-3 rounded-xl font-bold" placeholder="₹ Reward" required>
+                    <input type="file" id="t-file" accept="image/*" class="w-full text-xs">
+                </div>
+                <div class="flex gap-3 mt-4">
+                    <button type="button" onclick="UI.modal('modal-create-task', false)" class="flex-1 bg-gray-100 py-3 rounded-xl font-bold">Cancel</button>
+                    <button type="submit" id="btn-create-task" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold">Create Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>
