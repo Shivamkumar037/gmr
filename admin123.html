@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GMR Admin | User Management</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        primary: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #f8fafc; color: #1e293b; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        .sidebar { width: 260px; transition: all 0.3s; }
+        .nav-item { transition: all 0.2s; border-left: 3px solid transparent; }
+        .nav-item:hover, .nav-item.active { background: #f1f5f9; border-left-color: #2563eb; color: #2563eb; }
+        .nav-item.active i { color: #2563eb; }
+
+        .spinner {
+            width: 20px; height: 20px;
+            border: 2px solid #fff; border-bottom-color: transparent;
+            border-radius: 50%; display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Modal Animation */
+        .modal { opacity: 0; pointer-events: none; transition: opacity 0.2s ease-in; }
+        .modal.open { opacity: 1; pointer-events: auto; }
+        .modal-content { transform: scale(0.95); transition: transform 0.2s ease-in; }
+        .modal.open .modal-content { transform: scale(1); }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <script>
+        const API_BASE_URL = "https://gmrback-1.onrender.com/api"; 
+
+        const App = {
+            token: localStorage.getItem('admin_token'),
+            user: JSON.parse(localStorage.getItem('admin_user') || 'null'),
+            
+            // --- API WRAPPER ---
+            async request(endpoint, method = 'GET', body = null, isFile = false) {
+                const headers = {};
+                if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+                if (!isFile) headers['Content-Type'] = 'application/json';
+
+                const config = { method, headers };
+                if (body) config.body = isFile ? body : JSON.stringify(body);
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+                    if (response.status === 401 || response.status === 403) {
+                        this.logout();
+                        throw new Error("Session Expired");
+                    }
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || `Error ${response.status}`);
+                    return data;
+                } catch (error) {
+                    console.error("API Error:", error);
+                    if(error.message.includes('Failed to fetch')) {
+                        Swal.fire('Connection Error', 'Backend is offline. Please start Spring Boot.', 'error');
+                    }
+                    throw error;
+                }
+            },
+
+            // --- AUTH ---
+            async login(e) {
+                e.preventDefault();
+                const mobile = document.getElementById('l-mobile').value;
+                const password = document.getElementById('l-pass').value;
+                const btn = document.getElementById('btn-login');
+
+                btn.innerHTML = '<div class="spinner"></div>';
+                btn.disabled = true;
+
+                try {
+                    const res = await this.request('/auth/connect', 'POST', { mobile, password });
+                    if (res.user.role !== 'ROLE_ADMIN' && res.user.role !== 'ADMIN') throw new Error("Not an Admin Account");
+
+                    localStorage.setItem('admin_token', res.token);
+                    localStorage.setItem('admin_user', JSON.stringify(res.user));
+                    this.token = res.token;
+                    location.reload();
+                } catch (err) {
+                    Swal.fire("Login Failed", err.message, "error");
+                    btn.innerHTML = 'Sign In';
+                    btn.disabled = false;
+                }
+            },
+
+            logout() {
+                localStorage.clear();
+                location.reload();
+            },
+
+            checkAuth() {
+                if (this.token) {
+                    document.getElementById('auth-screen').classList.add('hidden');
+                    document.getElementById('admin-screen').classList.remove('hidden');
+                    this.loadDashboard();
+                } else {
+                    document.getElementById('auth-screen').classList.remove('hidden');
+                    document.getElementById('admin-screen').classList.add('hidden');
+                }
+            },
+
+            // --- DASHBOARD ---
+            async loadDashboard() {
+                try {
+                    const stats = await this.request('/admin/dashboard');
+                    document.getElementById('stat-users').innerText = stats.totalUsers || 0;
+                    document.getElementById('stat-tasks').innerText = stats.totalTasks || 0;
+                    document.getElementById('stat-withdraw').innerText = stats.pendingWithdrawals || 0;
+                    
+                    this.loadWithdrawals();
+                    this.loadTasks();
+                    this.loadUsers(); // 🔥 New Function Call
+                } catch (err) {}
+            },
+
+            // --- USERS MANAGEMENT (NEW FEATURE) ---
+            async loadUsers() {
+                try {
+                    // HIT JAVA CONTROLLER: /admin/users (Ensure this exists in backend)
+                    // If not exist, backend returns 404, we handle gently
+                    let list = [];
+                    try {
+                        list = await this.request('/admin/users');
+                    } catch(e) {
+                        console.warn("Backend /admin/users endpoint missing. Add it to Java.");
+                    }
+
+                    const tbody = document.getElementById('table-users');
+                    
+                    if (list.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-400">No users found or endpoint missing.</td></tr>`;
+                        return;
+                    }
+
+                    tbody.innerHTML = list.map(u => `
+                        <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                            <td class="p-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
+                                        ${u.fullName ? u.fullName.charAt(0).toUpperCase() : 'U'}
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-gray-800 text-sm">${u.fullName || 'Unknown'}</p>
+                                        <p class="text-xs text-gray-500">Joined: ${new Date(u.createdAt).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="p-4 font-mono font-bold text-gray-600 text-sm">${u.mobile}</td>
+                            <td class="p-4">
+                                <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">₹${u.walletBalance.toFixed(2)}</span>
+                            </td>
+                            <td class="p-4 text-sm text-gray-600">
+                                Total Earned: <span class="font-bold">₹${u.totalEarned || 0}</span>
+                            </td>
+                            <td class="p-4 flex gap-2">
+                                <button class="text-blue-500 hover:bg-blue-50 p-2 rounded" title="View Details"><i class="fa-solid fa-eye"></i></button>
+                                <button class="text-red-500 hover:bg-red-50 p-2 rounded" title="Block User"><i class="fa-solid fa-ban"></i></button>
+                            </td>
+                        </tr>
+                    `).join('');
+                } catch (err) {
+                    console.error(err);
+                }
+            },
+
+            filterUsers() {
+                const query = document.getElementById('search-user').value.toLowerCase();
+                const rows = document.querySelectorAll('#table-users tr');
+                rows.forEach(row => {
+                    const text = row.innerText.toLowerCase();
+                    row.style.display = text.includes(query) ? '' : 'none';
+                });
+            },
+
+            // --- WITHDRAWALS ---
+            async loadWithdrawals() {
+                const list = await this.request('/admin/withdrawals/pending');
+                const tbody = document.getElementById('table-withdrawals');
+                if (list.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-400">No Pending Requests</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = list.map(item => `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                        <td class="p-4">
+                            <p class="font-bold text-gray-800 text-sm">${item.user.fullName}</p>
+                            <p class="text-xs text-gray-500">${item.user.mobile}</p>
+                        </td>
+                        <td class="p-4 font-mono font-bold text-gray-700">₹${item.amount}</td>
+                        <td class="p-4"><span class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs font-mono">${item.upiId}</span></td>
+                        <td class="p-4 flex gap-2">
+                            <button onclick="App.processWithdraw(${item.id}, 'approve')" class="w-8 h-8 rounded bg-green-100 text-green-600 hover:bg-green-200"><i class="fa-solid fa-check"></i></button>
+                            <button onclick="App.processWithdraw(${item.id}, 'reject')" class="w-8 h-8 rounded bg-red-100 text-red-600 hover:bg-red-200"><i class="fa-solid fa-xmark"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+            },
+
+            async processWithdraw(id, action) {
+                if(confirm(`Are you sure you want to ${action} this request?`)) {
+                    await this.request(`/admin/withdrawals/${id}/${action}`, 'POST');
+                    UI.toast('Success', 'success');
+                    this.loadDashboard();
+                }
+            },
+
+            // --- TASKS ---
+            async createTask(e) {
+                e.preventDefault();
+                const formData = new FormData();
+                formData.append('title', document.getElementById('t-title').value);
+                formData.append('description', document.getElementById('t-desc').value);
+                formData.append('reward', document.getElementById('t-reward').value);
+                formData.append('actionUrl', document.getElementById('t-url').value);
+                const file = document.getElementById('t-file').files[0];
+                if(file) formData.append('file', file);
+
+                await this.request('/admin/tasks', 'POST', formData, true);
+                UI.toast('Task Created', 'success');
+                UI.modal('modal-create-task', false);
+                this.loadTasks();
+                this.loadDashboard();
+            },
+
+            async loadTasks() {
+                const tasks = await this.request('/tasks');
+                const container = document.getElementById('task-list-admin');
+                container.innerHTML = tasks.map(t => `
+                    <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <img src="${t.imageUrl}" class="w-10 h-10 rounded-lg bg-gray-100 object-cover">
+                            <div><h4 class="font-bold text-sm text-gray-800">${t.title}</h4><p class="text-xs text-gray-500">₹${t.rewardAmount}</p></div>
+                        </div>
+                        <button onclick="App.deleteTask(${t.id})" class="text-red-500 hover:bg-red-50 p-2 rounded"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `).join('');
+            },
+
+            async deleteTask(id) {
+                if(confirm('Delete Task?')) {
+                    await this.request(`/admin/tasks/${id}`, 'DELETE');
+                    this.loadTasks();
+                }
+            },
+
+            // --- UI ---
+            switchTab(tabId) {
+                document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+                document.getElementById(`view-${tabId}`).classList.remove('hidden');
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active', 'bg-gray-100'));
+                document.getElementById(`nav-${tabId}`).classList.add('active', 'bg-gray-100');
+            },
+            toggleModal(id, show) {
+                const el = document.getElementById(id);
+                if (show) el.classList.add('open');
+                else el.classList.remove('open');
+            }
+        };
+
+        const UI = {
+            toast(msg, icon) { Swal.fire({ toast: true, position: 'top-end', icon: icon, title: msg, showConfirmButton: false, timer: 3000 }); },
+            modal(id, show) { App.toggleModal(id, show); }
+        };
+
+        window.onload = () => App.checkAuth();
+    </script>
+
+    <div id="auth-screen" class="hidden fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm p-8 rounded-3xl shadow-2xl text-center">
+            <h2 class="text-2xl font-black text-slate-800">Admin Portal</h2>
+            <p class="text-gray-500 text-sm mb-8">Login to manage GMR App</p>
+            <form onsubmit="App.login(event)" class="space-y-4 text-left">
+                <input type="text" id="l-mobile" class="w-full bg-gray-50 border p-3 rounded-xl font-mono font-bold" placeholder="9999999999">
+                <input type="password" id="l-pass" class="w-full bg-gray-50 border p-3 rounded-xl font-bold" placeholder="••••••">
+                <button id="btn-login" type="submit" class="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold">Sign In</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="admin-screen" class="hidden w-full h-full flex">
+        
+        <aside class="sidebar bg-white border-r border-gray-200 h-full flex flex-col z-20 shadow-xl">
+            <div class="h-[70px] flex items-center px-6 border-b border-gray-100">
+                <span class="font-black text-xl text-slate-900">GMR<span class="text-blue-600">Admin</span></span>
+            </div>
+            <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+                <button onclick="App.switchTab('dashboard')" id="nav-dashboard" class="nav-item active w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold text-gray-600"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</button>
+                <button onclick="App.switchTab('users')" id="nav-users" class="nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold text-gray-600"><i class="fa-solid fa-users w-5"></i> Users Directory</button>
+                <button onclick="App.switchTab('withdrawals')" id="nav-withdrawals" class="nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold text-gray-600"><i class="fa-solid fa-money-bill-transfer w-5"></i> Withdrawals</button>
+                <button onclick="App.switchTab('tasks')" id="nav-tasks" class="nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold text-gray-600"><i class="fa-solid fa-list-check w-5"></i> Tasks</button>
+            </nav>
+            <div class="p-4 border-t border-gray-100">
+                <button onclick="App.logout()" class="w-full text-red-500 bg-red-50 py-3 rounded-xl font-bold text-sm">Logout</button>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col h-full relative overflow-hidden bg-slate-50">
+            <header class="h-[70px] bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm z-10">
+                <h2 class="font-bold text-gray-700">Control Center</h2>
+                <div class="flex items-center gap-2"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> <span class="text-xs font-bold text-green-600">System Online</span></div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-8 space-y-8">
+                
+                <div id="view-dashboard" class="view-section space-y-6 animate-fade-in">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                            <p class="text-gray-400 text-xs font-bold uppercase">Total Users</p>
+                            <h3 id="stat-users" class="text-3xl font-black text-slate-800 mt-1">0</h3>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                            <p class="text-gray-400 text-xs font-bold uppercase">Pending Pay</p>
+                            <h3 id="stat-withdraw" class="text-3xl font-black text-orange-500 mt-1">0</h3>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                            <p class="text-gray-400 text-xs font-bold uppercase">Total Tasks</p>
+                            <h3 id="stat-tasks" class="text-3xl font-black text-green-600 mt-1">0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-users" class="view-section hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-gray-800">All Registered Users</h2>
+                        <div class="relative">
+                            <input type="text" id="search-user" onkeyup="App.filterUsers()" placeholder="Search mobile or name..." class="pl-10 pr-4 py-2 border rounded-xl text-sm outline-none focus:border-blue-500 w-64">
+                            <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400 text-xs"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase">User Profile</th>
+                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase">Mobile</th>
+                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase">Wallet</th>
+                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase">Stats</th>
+                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-users">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="view-withdrawals" class="view-section hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-gray-800">Pending Requests</h2>
+                        <button onclick="App.loadWithdrawals()" class="text-blue-600 font-bold text-sm"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase">User</th>
+                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase">Amount</th>
+                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase">UPI ID</th>
+                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-withdrawals"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="view-tasks" class="view-section hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-gray-800">Task Manager</h2>
+                        <button onclick="UI.modal('modal-create-task', true)" class="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold shadow-lg text-sm">
+                            <i class="fa-solid fa-plus mr-2"></i> Create Task
+                        </button>
+                    </div>
+                    <div id="task-list-admin" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <div id="modal-create-task" class="modal fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="modal-content bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl">
+            <h3 class="font-bold text-xl text-slate-900 mb-4">Publish New Task</h3>
+            <form onsubmit="App.createTask(event)" class="space-y-4">
+                <input type="text" id="t-title" class="w-full border p-3 rounded-xl outline-none" placeholder="Task Title" required>
+                <textarea id="t-desc" class="w-full border p-3 rounded-xl outline-none" placeholder="Description" required></textarea>
+                
+<div>
+    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Action URL (Link)</label>
+    <input type="text" id="t-url" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:border-blue-500" placeholder="https://youtube.com/..." required>
+</div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" id="t-reward" class="w-full border p-3 rounded-xl outline-none font-bold" placeholder="Reward ₹" required>
+                    <input type="file" id="t-file" accept="image/*" class="w-full text-xs">
+                </div>
+                <div class="flex gap-3 mt-4">
+                    <button type="button" onclick="UI.modal('modal-create-task', false)" class="flex-1 bg-gray-100 py-3 rounded-xl font-bold">Cancel</button>
+                    <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>
