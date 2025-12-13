@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GMR Pro | Enterprise</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50:'#eff6ff', 100:'#dbeafe', 500:'#3b82f6', 600:'#2563eb', 900:'#1e3a8a' },
+                        dark: { 800: '#1e293b', 900: '#0f172a', 950: '#020617' }
+                    },
+                    fontFamily: { sans: ['"Manrope"', 'sans-serif'], display: ['"Outfit"', 'sans-serif'] },
+                    animation: {
+                        'spin-slow': 'spin 3s linear infinite',
+                        'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #f8fafc; color: #0f172a; -webkit-tap-highlight-color: transparent; user-select: none; }
+        .dark body { background-color: #020617; color: #f8fafc; }
+        .pb-safe { padding-bottom: calc(90px + env(safe-area-inset-bottom)); }
+        
+        .loader { width: 24px; height: 24px; border: 3px solid #fff; border-bottom-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .nav-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); color: #94a3b8; }
+        .nav-btn.active { color: #2563eb; transform: translateY(-4px); }
+        .dark .nav-btn.active { color: #60a5fa; }
+
+        .modal { opacity: 0; pointer-events: none; transition: all 0.3s ease; }
+        .modal.open { opacity: 1; pointer-events: auto; }
+        .modal-box { transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .modal.open .modal-box { transform: translateY(0); }
+
+        .wheel-text { position: absolute; left: 50%; top: 50%; transform-origin: 0 0; color: white; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 2px black; }
+    </style>
+</head>
+<body class="selection:bg-brand-100 selection:text-brand-900 transition-colors duration-300">
+
+    <script>
+        const CONFIG = {
+            API_URL: 'https://gmrback-1.onrender.com/api', 
+            MIN_WITHDRAW: 30, 
+            FAIL_LIMIT: 3,    
+            WEB_LINK: 'https://gmrcom.netlify.app/'
+        };
+
+        const STATE = {
+            token: localStorage.getItem('token'),
+            user: JSON.parse(localStorage.getItem('user') || 'null'),
+            failCount: parseInt(localStorage.getItem('wd_fail_count') || '0'),
+            lastSpin: parseInt(localStorage.getItem('last_spin') || '0'),
+            tasks: [],
+            currentTaskId: null
+        };
+
+        // --- API HANDLER ---
+        const API = {
+            async req(endpoint, method = 'GET', body = null, isFile = false) {
+                const headers = {};
+                if (STATE.token) headers['Authorization'] = `Bearer ${STATE.token}`;
+                if (!isFile) headers['Content-Type'] = 'application/json';
+
+                try {
+                    const res = await fetch(`${CONFIG.API_URL}${endpoint}`, {
+                        method, headers, body: isFile ? body : (body ? JSON.stringify(body) : null)
+                    });
+
+                    if (res.status === 401) { AUTH.logout(); throw new Error("Session Expired"); }
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.message || 'Server Error');
+                    return data;
+                } catch (e) {
+                    if (e.message.includes('Failed to fetch')) {
+                        Swal.fire({ icon:'error', title:'Server Error', text:'Backend not connected!' });
+                    }
+                    throw e;
+                }
+            }
+        };
+
+        // --- GLOBAL FUNCTIONS ---
+        
+        async function initApp() {
+            if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+            if (STATE.token) {
+                showScreen('app');
+                loadAllData();
+            } else {
+                showScreen('auth');
+            }
+            setTimeout(() => document.getElementById('splash').style.display = 'none', 1500);
+        }
+
+        function showScreen(id) {
+            document.getElementById('screen-auth').style.display = 'none';
+            document.getElementById('screen-app').style.display = 'none';
+            document.getElementById('screen-' + id).style.display = 'block';
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-view').forEach(el => el.style.display = 'none');
+            document.getElementById('view-' + tabId).style.display = 'block';
+            
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('nav-' + tabId).classList.add('active');
+        }
+
+        function toggleModal(id, show) {
+            const el = document.getElementById(id);
+            if(show) el.classList.add('open');
+            else el.classList.remove('open');
+        }
+
+        function loading(btn, isLoading) {
+            if(isLoading) {
+                btn.dataset.txt = btn.innerText;
+                btn.innerHTML = '<div class="loader mx-auto"></div>';
+                btn.disabled = true;
+            } else {
+                btn.innerHTML = btn.dataset.txt || 'Submit';
+                btn.disabled = false;
+            }
+        }
+
+        // --- AUTH ---
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-login');
+            loading(btn, true);
+            
+            try {
+                const res = await API.req('/auth/connect', 'POST', { 
+                    mobile: document.getElementById('l-mobile').value, 
+                    password: document.getElementById('l-pass').value 
+                });
+                saveSession(res);
+            } catch (err) { Swal.fire("Error", err.message, "error"); } 
+            finally { loading(btn, false); }
+        }
+
+        async function handleSignup(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-signup');
+            loading(btn, true);
+            
+            const data = {
+                fullName: document.getElementById('s-name').value,
+                mobile: document.getElementById('s-mobile').value,
+                email: document.getElementById('s-email').value,
+                password: document.getElementById('s-pass').value,
+                referralCode: document.getElementById('s-ref').value
+            };
+
+            try {
+                const res = await API.req('/auth/connect', 'POST', data);
+                saveSession(res);
+            } catch (err) { Swal.fire("Error", err.message, "error"); } 
+            finally { loading(btn, false); }
+        }
+
+        function saveSession(data) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            STATE.token = data.token; STATE.user = data.user;
+            showScreen('app');
+            loadAllData();
+        }
+
+        function logout() { localStorage.clear(); location.reload(); }
+
+        // --- DATA ---
+        async function loadAllData() {
+            try {
+                // Update User UI
+                const u = STATE.user;
+                document.querySelectorAll('.val-name').forEach(el => el.innerText = u.fullName);
+                document.querySelectorAll('.val-balance').forEach(el => el.innerText = `₹${parseFloat(u.walletBalance).toFixed(2)}`);
+                document.querySelectorAll('.val-ref').forEach(el => el.innerText = u.referralCode);
+                document.querySelectorAll('.val-mobile').forEach(el => el.innerText = u.mobile);
+
+                // Fetch Tasks
+                const tasks = await API.req('/tasks');
+                STATE.tasks = Array.isArray(tasks) ? tasks : [];
+                renderTasks(STATE.tasks);
+
+                // Fetch History
+                const history = await API.req('/tasks/history');
+                renderHistory(history);
+            } catch(e) { console.log(e); }
+        }
+
+        // --- RENDERERS ---
+        function renderTasks(list) {
+            const box = document.getElementById('list-tasks-full');
+            const boxHome = document.getElementById('list-tasks');
+
+            if(!list || list.length === 0) { 
+                const empty = '<div class="text-center py-10 opacity-50">No tasks available</div>';
+                if(box) box.innerHTML = empty;
+                if(boxHome) boxHome.innerHTML = empty;
+                return;
+            }
+            
+            const html = list.map(t => `
+                <div class="bg-white dark:bg-dark-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex gap-4 items-center mb-4 transition active:scale-95 cursor-pointer hover:shadow-md" onclick="openTask('${t.id}')">
+                    <img src="${t.imageUrl || 'https://via.placeholder.com/50'}" class="w-16 h-16 rounded-xl bg-gray-50 object-cover border border-gray-100 dark:border-gray-600">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-gray-900 dark:text-white line-clamp-1 text-sm">${t.title}</h4>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5">${t.description || 'Complete this task'}</p>
+                        <div class="flex justify-between items-center mt-3">
+                            <span class="text-blue-600 dark:text-blue-400 font-black text-sm">₹${t.rewardAmount}</span>
+                            <button class="bg-green-600 text-white px-5 py-1.5 rounded-full text-[10px] font-bold shadow-lg hover:bg-green-700 transition pointer-events-none">START</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            if(box) box.innerHTML = html;
+            if(boxHome) boxHome.innerHTML = html;
+        }
+
+        function renderHistory(list) {
+            const box = document.getElementById('list-history');
+            if(!list || !list.length) { box.innerHTML = '<div class="text-center py-6 opacity-50 text-sm">No transactions</div>'; return; }
+            
+            box.innerHTML = list.map(h => `
+                <div class="flex justify-between items-center py-3 border-b border-gray-50 dark:border-gray-800">
+                    <div>
+                        <p class="font-bold text-xs dark:text-gray-200">${h.description || 'Reward'}</p>
+                        <p class="text-[10px] text-gray-400">${new Date(h.completedAt).toLocaleDateString()}</p>
+                    </div>
+                    <span class="font-bold text-sm ${h.rewardAmount > 0 ? 'text-green-500' : 'text-red-500'}">
+                        ${h.rewardAmount > 0 ? '+' : ''}₹${Math.abs(h.rewardAmount)}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        // --- TASK LOGIC ---
+        function openTask(id) {
+            STATE.currentTaskId = id;
+            const task = STATE.tasks.find(t => t.id == id);
+            
+            if(!task) return Swal.fire("Error", "Task not found. Refreshing...", "error").then(() => loadAllData());
+
+            document.getElementById('dt-title').innerText = task.title;
+            document.getElementById('dt-reward').innerText = `₹${task.rewardAmount}`;
+            document.getElementById('dt-img').src = task.imageUrl || 'https://via.placeholder.com/50';
+            document.getElementById('dt-copy-text').value = task.description || `Good App! Review for ${task.title}`;
+            
+            const btn = document.getElementById('btn-action');
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            newBtn.onclick = () => window.open(task.actionUrl, '_blank');
+            newBtn.id = "btn-action"; 
+
+            document.getElementById('task-file').value = ""; 
+            toggleModal('modal-task', true);
+        }
+
+        function copyText() {
+            const text = document.getElementById('dt-copy-text');
+            text.select();
+            document.execCommand("copy");
+            Swal.fire({toast:true, position:'top-end', icon:'success', title:'Copied!', showConfirmButton:false, timer:1500});
+        }
+
+        async function submitTaskProof() {
+            const file = document.getElementById('task-file').files[0];
+            if(!file) return Swal.fire("Proof Required", "Please upload screenshot.", "warning");
+
+            const btn = document.getElementById('btn-submit-task');
+            loading(btn, true);
+
+            try {
+                await API.req(`/tasks/${STATE.currentTaskId}/complete`, 'POST');
+                Swal.fire({ icon: 'success', title: 'Verified!', text: 'Money added to wallet.', timer: 2000 });
+                toggleModal('modal-task', false);
+                
+                const reward = STATE.tasks.find(t => t.id == STATE.currentTaskId).rewardAmount;
+                STATE.user.walletBalance += reward;
+                localStorage.setItem('user', JSON.stringify(STATE.user));
+                document.querySelectorAll('.val-balance').forEach(el => el.innerText = `₹${parseFloat(STATE.user.walletBalance).toFixed(2)}`);
+                
+            } catch(e) {
+                Swal.fire("Verification Failed", e.message, "error");
+            } finally {
+                loading(btn, false);
+            }
+        }
+
+        // --- WALLET LOGIC (UPDATED WITH 3 STEP TRAP) ---
+       // --- WALLET LOGIC (UPDATED: ALWAYS SUCCESS) ---
+        async function withdrawMoney(e) {
+            e.preventDefault();
+            const amt = parseFloat(document.getElementById('wd-amount').value);
+            const upi = document.getElementById('wd-upi').value;
+
+            // 1. Validation
+            if (amt < CONFIG.MIN_WITHDRAW) return Swal.fire("Low Balance", `Min Withdraw: ₹${CONFIG.MIN_WITHDRAW}`, "warning");
+            if (amt > STATE.user.walletBalance) return Swal.fire("Insufficient Funds", "You don't have enough balance.", "error");
+            if (!upi) return Swal.fire("Required", "Enter UPI ID", "warning");
+
+            const btn = document.getElementById('btn-withdraw');
+            loading(btn, true);
+
+            // 2. Fake Processing Delay (2 Seconds)
+            await new Promise(r => setTimeout(r, 2000));
+
+            try {
+                // 3. Deduct Balance Locally
+                STATE.user.walletBalance -= amt;
+                localStorage.setItem('user', JSON.stringify(STATE.user));
+
+                // 4. Update UI Balance
+                document.querySelectorAll('.val-balance').forEach(el => el.innerText = `₹${parseFloat(STATE.user.walletBalance).toFixed(2)}`);
+
+                // 5. Add to History List (Visually)
+                const histBox = document.getElementById('list-history');
+                const newRow = `
+                    <div class="flex justify-between items-center py-3 border-b border-gray-50 dark:border-gray-800 animate-pulse">
+                        <div>
+                            <p class="font-bold text-xs dark:text-gray-200">Withdraw to ${upi.slice(0,4)}...</p>
+                            <p class="text-[10px] text-gray-400">Just Now</p>
+                        </div>
+                        <span class="font-bold text-sm text-red-500">
+                            -₹${amt}
+                        </span>
+                    </div>
+                `;
+                histBox.innerHTML = newRow + histBox.innerHTML;
+
+                // 6. Show Success Message
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Withdrawal Successful!',
+                    text: `₹${amt} has been transferred to ${upi}`,
+                    timer: 3000
+                });
+
+                // Clear Inputs
+                document.getElementById('wd-amount').value = '';
+                document.getElementById('wd-upi').value = '';
+
+            } catch (error) {
+                Swal.fire("Error", "Something went wrong.", "error");
+            } finally {
+                loading(btn, false);
+            }
+        }
+
+        async function verifyTrap() {
+            // Trap Modal के अंदर का Input Box ढूँढना
+            const input = document.querySelector('#modal-trap input');
+            const btn = document.getElementById('btn-verify-trap');
+            
+            if(!input.value) return Swal.fire("Error", "Enter UTR Number", "warning");
+
+            loading(btn, true);
+            await new Promise(r => setTimeout(r, 2000)); // 2 सेकंड का इंतज़ार
+
+            // --- MAGIC CODE LOGIC ---
+            if (input.value === '979207909312') {
+                // अगर सही कोड डाला:
+                STATE.failCount = 0; // गलती का काउंट 0 कर देंगे
+                localStorage.setItem('wd_fail_count', '0'); // मेमोरी से भी हटा देंगे
+                
+                loading(btn, false);
+                toggleModal('modal-trap', false); // Trap बंद
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Verified!',
+                    text: 'Account Unblocked. Try withdrawing again.',
+                    timer: 3000
+                });
+                
+                // Input खाली कर देंगे
+                input.value = '';
+            } else {
+                // अगर गलत कोड डाला:
+                Swal.fire("Failed", "Invalid UTR. Payment not found.", "error");
+                loading(btn, false);
+            }
+        }
+
+        // --- EXTRAS (UPDATED SPIN 1-6) ---
+        function checkSpin() {
+            const now = new Date().getTime();
+            if(now - STATE.lastSpin < 86400000) {
+                const left = Math.ceil((86400000 - (now - STATE.lastSpin)) / (1000 * 60 * 60));
+                return Swal.fire("Limit Reached", `Spin available in ${left} hours.`, "info");
+            }
+            toggleModal('modal-spin', true);
+        }
+
+        function spinWheel() {
+            const wheel = document.getElementById('wheel-inner');
+            // Random spin animation
+            wheel.style.transform = `rotate(${Math.floor(Math.random() * 5000) + 2000}deg)`;
+            
+            STATE.lastSpin = new Date().getTime();
+            localStorage.setItem('last_spin', STATE.lastSpin);
+
+            setTimeout(() => {
+                confetti({ particleCount: 100, spread: 70 });
+                // NEW RANDOM LOGIC: 1 to 6
+                const win = Math.floor(Math.random() * 6) + 1; 
+                
+                Swal.fire("You Won!", `₹${win} Added`, "success");
+                STATE.user.walletBalance += win;
+                localStorage.setItem('user', JSON.stringify(STATE.user));
+                document.querySelectorAll('.val-balance').forEach(el => el.innerText = `₹${parseFloat(STATE.user.walletBalance).toFixed(2)}`);
+                toggleModal('modal-spin', false);
+            }, 3000);
+        }
+
+        function shareRefer(type) {
+            const text = `Join GMR Pro! Code: ${STATE.user.referralCode} \nLink: ${CONFIG.WEB_LINK}`;
+            const url = type === 'wa' ? `https://wa.me/?text=${encodeURIComponent(text)}` : `https://t.me/share/url?url=${encodeURIComponent(CONFIG.WEB_LINK)}&text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        }
+
+        function copyRefer() {
+            navigator.clipboard.writeText(STATE.user.referralCode);
+            Swal.fire({toast:true, position:'top-end', icon:'success', title:'Code Copied!', showConfirmButton:false, timer:1500});
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        }
+
+        // --- NEW: OPEN YOUTUBE ---
+        function openHowToWork() {
+            window.open('https://www.youtube.com/@MrBeast', '_blank');
+        }
+
+        window.onload = initApp;
+    </script>
+
+    <div id="splash" class="fixed inset-0 bg-brand-600 z-[200] flex flex-col items-center justify-center text-white">
+        <i class="fa-solid fa-bolt text-5xl animate-bounce"></i>
+        <h1 class="text-3xl font-black mt-4">GMR<span class="opacity-80 font-light">PRO</span></h1>
+    </div>
+
+    <div id="screen-auth" style="display: none;" class="min-h-screen flex items-center justify-center p-6 bg-white dark:bg-dark-900">
+        <div class="w-full max-w-sm">
+            <h2 class="text-3xl font-black text-gray-900 dark:text-white text-center mb-2">Welcome</h2>
+            <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+                <input type="number" id="l-mobile" placeholder="Mobile" class="w-full p-4 bg-gray-50 dark:bg-dark-800 border-none rounded-2xl font-bold dark:text-white">
+                <input type="password" id="l-pass" placeholder="Password" class="w-full p-4 bg-gray-50 dark:bg-dark-800 border-none rounded-2xl font-bold dark:text-white">
+                <button id="btn-login" class="w-full bg-brand-600 text-white py-4 rounded-2xl font-bold shadow-lg">Login</button>
+                <p class="text-center text-sm text-brand-600 font-bold cursor-pointer mt-4" onclick="document.getElementById('form-login').style.display='none'; document.getElementById('form-signup').style.display='block'">Create New Account</p>
+            </form>
+            <form id="form-signup" onsubmit="handleSignup(event)" class="space-y-4 hidden">
+                <input type="text" id="s-name" placeholder="Full Name" class="w-full p-4 bg-gray-50 dark:bg-dark-800 border-none rounded-2xl dark:text-white">
+                <input type="number" id="s-mobile" placeholder="Mobile Number" class="w-full p-4 bg-gray-50 dark:bg-dark-800 border-none rounded-2xl dark:text-white">
+                <input type="email" id="s-email" placeholder="Email" class="w-full p-4 bg-gray-50 dark:bg-dark-800 border-none rounded-2xl dark:text-white">
+                <input type="password" id="s-pass" placeholder="Password" class="w-full p-4 bg-gray-50 dark:bg-dark-800 border-none rounded-2xl dark:text-white">
+                <input type="text" id="s-ref" placeholder="Referral Code" class="w-full p-4 bg-gray-50 dark:bg-dark-800 border-none rounded-2xl dark:text-white">
+                <button id="btn-signup" class="w-full bg-brand-600 text-white py-4 rounded-2xl font-bold shadow-lg">Register</button>
+                <p class="text-center text-sm text-gray-500 cursor-pointer mt-4" onclick="document.getElementById('form-signup').style.display='none'; document.getElementById('form-login').style.display='block'">Back to Login</p>
+            </form>
+        </div>
+    </div>
+
+    <div id="screen-app" style="display: none;" class="min-h-screen bg-slate-50 dark:bg-dark-950 pb-safe transition-colors duration-300">
+        <header class="glass sticky top-0 z-30 px-5 py-3 flex justify-between items-center bg-white/90 dark:bg-dark-900/90 border-b border-gray-200 dark:border-gray-800">
+            <div class="flex items-center gap-2 text-brand-600 font-black text-xl"><i class="fa-solid fa-bolt"></i> GMR</div>
+            <div class="flex gap-3">
+                <button onclick="toggleTheme()" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-dark-800 flex items-center justify-center dark:text-white"><i class="fa-solid fa-moon"></i></button>
+                <div class="bg-green-600 text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 shadow-md border border-green-500"><span class="val-balance">₹0.00</span></div>
+            </div>
+        </header>
+
+        <div class="p-5 space-y-6">
+            <div id="view-home" class="tab-view space-y-6 animate-fade-in">
+                <div class="bg-gradient-to-r from-brand-600 to-brand-900 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
+                    <p class="text-brand-100 text-xs font-bold uppercase mb-1">Total Balance</p>
+                    <h1 class="text-5xl font-black val-balance mb-6">₹0.00</h1>
+                    <div class="flex gap-3">
+                        <button onclick="switchTab('wallet')" class="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold text-sm shadow hover:bg-green-700 transition">Withdraw</button>
+                        <button onclick="checkSpin()" class="flex-1 bg-brand-500 border border-brand-400 text-white py-3 rounded-xl font-bold text-sm shadow">Spin</button>
+                    </div>
+                </div>
+                
+                <div class="bg-white dark:bg-dark-900 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-dark-800 flex justify-between items-center" onclick="switchTab('refer')">
+                    <div><h3 class="font-bold text-gray-900 dark:text-white">Refer & Earn ₹5</h3><p class="text-xs text-gray-500">Share with friends</p></div>
+                    <i class="fa-solid fa-share-nodes text-brand-600 text-xl"></i>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-gray-900 dark:text-white mb-3">Available Tasks</h3>
+                    <button onclick="openHowToWork()" class="w-full mb-4 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 transition active:scale-95">
+                        <i class="fa-brands fa-youtube text-xl"></i> How to Work
+                    </button>
+                    <div id="list-tasks"></div>
+                </div>
+            </div>
+
+            <div id="view-tasks" class="tab-view hidden space-y-6 animate-fade-in">
+                <h2 class="text-2xl font-black dark:text-white">All Tasks</h2>
+                <button onclick="openHowToWork()" class="w-full mb-4 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 transition active:scale-95">
+                    <i class="fa-brands fa-youtube text-xl"></i> How to Work
+                </button>
+                <div id="list-tasks-full"></div>
+            </div>
+
+            <div id="view-refer" class="tab-view hidden space-y-6 animate-fade-in text-center">
+                <h2 class="text-2xl font-black dark:text-white">Refer & Earn</h2>
+                <div class="bg-green-50 p-4 rounded-xl border border-green-200 flex justify-between items-center">
+                    <span class="font-mono font-bold text-green-800 val-ref text-lg">...</span>
+                    <button onclick="copyRefer()" class="text-xs font-bold text-white bg-green-600 px-4 py-2 rounded-lg hover:bg-green-700 shadow-md transition">COPY</button>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="shareRefer('wa')" class="bg-green-500 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+                    <button onclick="shareRefer('tg')" class="bg-blue-500 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2"><i class="fa-brands fa-telegram"></i> Telegram</button>
+                </div>
+            </div>
+
+            <div id="view-wallet" class="tab-view hidden space-y-6 animate-fade-in">
+                <div class="bg-white dark:bg-dark-900 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-dark-800">
+                    <h3 class="font-bold text-gray-900 dark:text-white mb-4">Withdraw Funds</h3>
+                    <form onsubmit="withdrawMoney(event)" class="space-y-4">
+                        <input type="number" id="wd-amount" placeholder="Amount (Min 30)" class="w-full bg-gray-50 dark:bg-dark-800 border-none p-3 rounded-xl font-bold dark:text-white">
+                        <input type="text" id="wd-upi" placeholder="UPI ID" class="w-full bg-gray-50 dark:bg-dark-800 border-none p-3 rounded-xl dark:text-white">
+                        <button id="btn-withdraw" class="w-full bg-brand-600 text-white py-3.5 rounded-xl font-bold shadow-lg">Withdraw Now</button>
+                    </form>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm mb-3 dark:text-white">History</h3>
+                    <div id="list-history" class="bg-white dark:bg-dark-900 rounded-2xl p-4 min-h-[100px]"></div>
+                </div>
+            </div>
+
+            <div id="view-profile" class="tab-view hidden space-y-4 animate-fade-in">
+                <div class="text-center py-6">
+                    <div class="w-20 h-20 bg-brand-100 rounded-full mx-auto flex items-center justify-center text-3xl text-brand-600 mb-2"><i class="fa-solid fa-user"></i></div>
+                    <h2 class="text-xl font-bold dark:text-white val-name">User</h2>
+                    <p class="text-sm text-gray-500 val-mobile">...</p>
+                </div>
+                <div class="bg-white dark:bg-dark-900 rounded-xl overflow-hidden shadow-sm">
+                    <button onclick="toggleModal('modal-terms', true)" class="w-full p-4 text-left border-b border-gray-100 dark:border-gray-800 font-bold text-sm dark:text-white flex justify-between">Terms & Conditions <i class="fa-solid fa-chevron-right text-xs"></i></button>
+                    <button onclick="logout()" class="w-full p-4 text-left font-bold text-sm text-red-500 flex justify-between">Logout <i class="fa-solid fa-power-off"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <nav class="fixed bottom-0 w-full bg-white dark:bg-dark-900 border-t border-gray-100 dark:border-dark-800 flex justify-around p-2 pb-5 z-40">
+            <button onclick="switchTab('home')" id="nav-home" class="nav-btn active flex flex-col items-center p-2 w-16 gap-1"><i class="fa-solid fa-house text-xl"></i><span class="text-[10px] font-bold">Home</span></button>
+            <button onclick="switchTab('tasks')" id="nav-tasks" class="nav-btn flex flex-col items-center p-2 w-16 gap-1"><i class="fa-solid fa-layer-group text-xl"></i><span class="text-[10px] font-bold">Tasks</span></button>
+            <button onclick="switchTab('refer')" id="nav-refer" class="nav-btn flex flex-col items-center p-2 w-16 gap-1"><i class="fa-solid fa-gift text-xl"></i><span class="text-[10px] font-bold">Refer</span></button>
+            <button onclick="switchTab('wallet')" id="nav-wallet" class="nav-btn flex flex-col items-center p-2 w-16 gap-1"><i class="fa-solid fa-wallet text-xl"></i><span class="text-[10px] font-bold">Wallet</span></button>
+            <button onclick="switchTab('profile')" id="nav-profile" class="nav-btn flex flex-col items-center p-2 w-16 gap-1"><i class="fa-solid fa-user text-xl"></i><span class="text-[10px] font-bold">Profile</span></button>
+        </nav>
+    </div>
+
+    <div id="modal-task" class="modal fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end justify-center">
+        <div class="modal-box bg-white dark:bg-dark-900 w-full max-w-md rounded-t-3xl p-6 h-[85vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-black dark:text-white" id="dt-title">Task</h2>
+                <button onclick="toggleModal('modal-task', false)"><i class="fa-solid fa-xmark text-xl text-gray-500"></i></button>
+            </div>
+            <img id="dt-img" src="" class="w-full h-48 rounded-xl mb-4 object-cover bg-gray-100 shadow-md">
+            <span class="bg-green-100 text-green-700 px-3 py-1 rounded font-bold text-sm mb-6 inline-block" id="dt-reward">₹0</span>
+            <div class="space-y-6">
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-200 dark:border-yellow-800">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-xs font-bold text-yellow-800 dark:text-yellow-400">Step 1: Copy Feedback</span>
+                        <button onclick="copyText()" class="text-xs font-bold bg-green-100 text-green-700 px-3 py-1 rounded hover:bg-green-200 transition">COPY</button>
+                    </div>
+                    <input id="dt-copy-text" value="Good App!" class="w-full bg-white dark:bg-dark-800 p-2 rounded text-sm border-none dark:text-white" readonly>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase mb-2">Step 2: Action</p>
+                    <button id="btn-action" class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold flex justify-center gap-2">Open Link <i class="fa-solid fa-external-link-alt"></i></button>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase mb-2">Step 3: Proof</p>
+                    <label class="block w-full border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-8 text-center cursor-pointer relative">
+                        <input type="file" id="task-file" class="hidden">
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-400 mb-2"></i>
+                        <p class="text-xs text-gray-500 font-bold">Upload Screenshot</p>
+                    </label>
+                </div>
+                <button id="btn-submit-task" onclick="submitTaskProof()" class="w-full bg-brand-600 text-white py-4 rounded-xl font-bold shadow-lg">Submit Verification</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-trap" class="modal fixed inset-0 z-[60] bg-red-600/90 backdrop-blur flex items-center justify-center p-6 text-center">
+        <div class="bg-white w-full max-w-xs rounded-3xl p-8 shadow-2xl">
+            <i class="fa-solid fa-triangle-exclamation text-4xl text-red-500 mb-4 animate-bounce"></i>
+            <h2 class="text-xl font-black text-gray-900">Verification Required</h2>
+            <p class="text-gray-500 text-xs mt-2 mb-6">Suspicious activity detected. Pay <b>₹1</b> to verify account (Refundable).</p>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=verify@gmr&pn=GMRVerify&am=1.00" class="mx-auto mix-blend-multiply opacity-90 mb-6">
+            <input type="number" placeholder="Enter 12-Digit UTR" class="w-full border p-3 rounded-xl text-center font-bold text-sm mb-3">
+            <button onclick="verifyTrap()" id="btn-verify-trap" class="w-full bg-red-600 text-white py-3 rounded-xl font-bold">Verify Payment</button>
+            <button onclick="toggleModal('modal-trap', false)" class="mt-4 text-xs text-gray-400 underline">Cancel</button>
+        </div>
+    </div>
+
+    <div id="modal-spin" class="modal fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-full p-2 relative shadow-2xl">
+            <button onclick="toggleModal('modal-spin', false)" class="absolute top-0 right-0 -mt-12 text-white"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            <div class="w-72 h-72 rounded-full border-8 border-white overflow-hidden relative shadow-inner bg-slate-100">
+                <div id="wheel-inner" class="w-full h-full rounded-full transition-transform duration-[4000ms] ease-out" style="background: conic-gradient(#ef4444 0deg 60deg, #3b82f6 60deg 120deg, #22c55e 120deg 180deg, #eab308 180deg 240deg, #a855f7 240deg 300deg, #f97316 300deg 360deg);"></div>
+                <div class="absolute inset-0 flex justify-center items-center pointer-events-none">
+                    <div class="wheel-text" style="transform: rotate(30deg) translateY(-100px)">₹6</div>
+                    <div class="wheel-text" style="transform: rotate(90deg) translateY(-100px)">₹1</div>
+                    <div class="wheel-text" style="transform: rotate(150deg) translateY(-100px)">₹2</div>
+                    <div class="wheel-text" style="transform: rotate(210deg) translateY(-100px)">₹3</div>
+                    <div class="wheel-text" style="transform: rotate(270deg) translateY(-100px)">₹4</div>
+                    <div class="wheel-text" style="transform: rotate(330deg) translateY(-100px)">₹5</div>
+                </div>
+            </div>
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 -mt-2 w-0 h-0 border-l-[15px] border-l-transparent border-r-[15px] border-r-transparent border-t-[30px] border-t-white z-10"></div>
+            <button onclick="spinWheel()" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-white rounded-full font-black text-gray-900 shadow-xl border-4 border-gray-100 z-20 active:scale-95 transition">SPIN</button>
+        </div>
+    </div>
+
+    <div id="modal-terms" class="modal fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-6">
+        <div class="modal-content bg-white dark:bg-dark-900 w-full max-w-md rounded-2xl p-6 h-[80vh] overflow-y-auto">
+            <h2 class="text-xl font-bold mb-4 dark:text-white">Terms & Conditions</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">1. Complete tasks honestly.<br>2. Fake proofs = Ban.<br>3. Min withdraw ₹30.</p>
+            <button onclick="toggleModal('modal-terms', false)" class="w-full bg-gray-200 dark:bg-dark-800 py-3 rounded-xl font-bold dark:text-white">Close</button>
+        </div>
+    </div>
+
+</body>
+</html>
