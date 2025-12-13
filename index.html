@@ -2,22 +2,45 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GMR Admin | User Management</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#16a34a">
+    <title>GMR Pro Enterprise | Task & Wallet System</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    <script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        display: ['"Outfit"', 'sans-serif'],
+                    },
                     colors: {
-                        primary: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a' }
+                        brand: {
+                            50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac',
+                            400: '#4ade80', 500: '#22c55e', 600: '#16a34a', 700: '#15803d',
+                            800: '#166534', 900: '#14532d', 950: '#052e16',
+                        },
+                        dark: {
+                            800: '#1e293b', 900: '#0f172a', 950: '#020617',
+                        }
+                    },
+                    animation: {
+                        'float': 'float 3s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 2s infinite',
+                        'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                        'slide-in-right': 'slideInRight 0.4s ease-out',
+                        'spin-slow': 'spin 8s linear infinite',
+                    },
+                    keyframes: {
+                        float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } },
+                        pulseGlow: { '0%, 100%': { boxShadow: '0 0 5px #22c55e' }, '50%': { boxShadow: '0 0 20px #22c55e' } },
+                        slideUp: { '0%': { transform: 'translateY(20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+                        slideInRight: { '0%': { transform: 'translateX(100%)' }, '100%': { transform: 'translateX(0)' } }
                     }
                 }
             }
@@ -25,410 +48,730 @@
     </script>
 
     <style>
-        body { background-color: #f8fafc; color: #1e293b; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        /* Base Reset */
+        :root { --header-height: 64px; --nav-height: 70px; }
+        body { background-color: #f8fafc; color: #1e293b; -webkit-tap-highlight-color: transparent; }
         
-        .sidebar { width: 260px; transition: all 0.3s; }
-        .nav-item { transition: all 0.2s; border-left: 3px solid transparent; }
-        .nav-item:hover, .nav-item.active { background: #f1f5f9; border-left-color: #2563eb; color: #2563eb; }
-        .nav-item.active i { color: #2563eb; }
+        /* Smooth Scroll & Hidden Scrollbar */
+        html { scroll-behavior: smooth; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        .spinner {
-            width: 20px; height: 20px;
-            border: 2px solid #fff; border-bottom-color: transparent;
-            border-radius: 50%; display: inline-block;
-            animation: spin 1s linear infinite;
+        /* Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        /* Modal Animation */
-        .modal { opacity: 0; pointer-events: none; transition: opacity 0.2s ease-in; }
-        .modal.open { opacity: 1; pointer-events: auto; }
-        .modal-content { transform: scale(0.95); transition: transform 0.2s ease-in; }
-        .modal.open .modal-content { transform: scale(1); }
+
+        /* Loaders */
+        .loader {
+            width: 20px; height: 20px;
+            border: 2px solid #ffffff;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            animation: rotation 1s linear infinite;
+        }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Navigation Active State */
+        .nav-item { transition: all 0.3s ease; position: relative; color: #94a3b8; }
+        .nav-item.active { color: #16a34a; transform: translateY(-2px); }
+        .nav-item.active::after {
+            content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);
+            width: 4px; height: 4px; background: #16a34a; border-radius: 50%;
+        }
+
+        /* Chat Widget Animation */
+        .chat-widget {
+            position: fixed; bottom: 90px; right: 20px; width: 350px; height: 500px;
+            z-index: 60; transform: translateY(120%) scale(0.9); opacity: 0;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+        .chat-widget.active { transform: translateY(0) scale(1); opacity: 1; pointer-events: all; }
+
+        /* Spin Wheel */
+        .wheel-outer { width: 280px; height: 280px; border-radius: 50%; border: 8px solid #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative; overflow: hidden; }
+        .wheel-inner { width: 100%; height: 100%; background: conic-gradient(#ef4444 0deg 60deg, #3b82f6 60deg 120deg, #10b981 120deg 180deg, #f59e0b 180deg 240deg, #8b5cf6 240deg 300deg, #ec4899 300deg 360deg); transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99); border-radius: 50%; }
+        .wheel-arrow { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); z-index: 10; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3)); }
+
+        /* Modal Transitions */
+        .modal { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal.open { opacity: 1; pointer-events: all; }
+        .modal-content { transform: scale(0.95) translateY(10px); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .modal.open .modal-content { transform: scale(1) translateY(0); }
     </style>
 </head>
-<body class="h-screen flex overflow-hidden">
-
+<body class="antialiased selection:bg-brand-100 selection:text-brand-900 pb-24 md:pb-0">
     <script>
-        const API_BASE_URL = "https://gmrback-1.onrender.com/api"; 
+    /**
+     * ====================================================================
+     * CORE CONFIGURATION
+     * ====================================================================
+     */
+    const CONFIG = {
+        API_BASE: "https://gmrback-1.onrender.com/api", // Connects to your Spring Boot
+        TRAP_FAIL_LIMIT: 3, // Fail 3 times before Trap
+        TRAP_AMOUNT: 1.00,
+        CURRENCY: '₹',
+        IS_MOCK: false // Set TRUE if backend is not running to test UI
+    };
 
-        const App = {
-            token: localStorage.getItem('admin_token'),
-            user: JSON.parse(localStorage.getItem('admin_user') || 'null'),
+    /**
+     * ====================================================================
+     * STATE MANAGEMENT
+     * ====================================================================
+     */
+    const STATE = {
+        token: localStorage.getItem('gmr_token'),
+        user: JSON.parse(localStorage.getItem('gmr_user') || 'null'),
+        failCount: parseInt(localStorage.getItem('gmr_fail_count') || '0'),
+        tasks: [],
+        history: [],
+        isChatOpen: false
+    };
+
+    /**
+     * ====================================================================
+     * API CONTROLLER (INTEGRATED WITH SPRING BOOT)
+     * ====================================================================
+     */
+    const API = {
+        async request(endpoint, method = 'GET', body = null) {
             
-            // --- API WRAPPER ---
-            async request(endpoint, method = 'GET', body = null, isFile = false) {
-                const headers = {};
-                if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
-                if (!isFile) headers['Content-Type'] = 'application/json';
+            // Mock Mode Fallback (If you just want to test UI without Backend)
+            if(CONFIG.IS_MOCK) return this.mockResponse(endpoint);
 
-                const config = { method, headers };
-                if (body) config.body = isFile ? body : JSON.stringify(body);
+            const headers = { 'Content-Type': 'application/json' };
+            if (STATE.token) headers['Authorization'] = `Bearer ${STATE.token}`;
 
-                try {
-                    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-                    if (response.status === 401 || response.status === 403) {
-                        this.logout();
-                        throw new Error("Session Expired");
-                    }
-                    const data = await response.json();
-                    if (!response.ok) throw new Error(data.message || `Error ${response.status}`);
-                    return data;
-                } catch (error) {
-                    console.error("API Error:", error);
-                    if(error.message.includes('Failed to fetch')) {
-                        Swal.fire('Connection Error', 'Backend is offline. Please start Spring Boot.', 'error');
-                    }
-                    throw error;
-                }
-            },
-
-            // --- AUTH ---
-            async login(e) {
-                e.preventDefault();
-                const mobile = document.getElementById('l-mobile').value;
-                const password = document.getElementById('l-pass').value;
-                const btn = document.getElementById('btn-login');
-
-                btn.innerHTML = '<div class="spinner"></div>';
-                btn.disabled = true;
-
-                try {
-                    const res = await this.request('/auth/connect', 'POST', { mobile, password });
-                    if (res.user.role !== 'ROLE_ADMIN' && res.user.role !== 'ADMIN') throw new Error("Not an Admin Account");
-
-                    localStorage.setItem('admin_token', res.token);
-                    localStorage.setItem('admin_user', JSON.stringify(res.user));
-                    this.token = res.token;
-                    location.reload();
-                } catch (err) {
-                    Swal.fire("Login Failed", err.message, "error");
-                    btn.innerHTML = 'Sign In';
-                    btn.disabled = false;
-                }
-            },
-
-            logout() {
-                localStorage.clear();
-                location.reload();
-            },
-
-            checkAuth() {
-                if (this.token) {
-                    document.getElementById('auth-screen').classList.add('hidden');
-                    document.getElementById('admin-screen').classList.remove('hidden');
-                    this.loadDashboard();
-                } else {
-                    document.getElementById('auth-screen').classList.remove('hidden');
-                    document.getElementById('admin-screen').classList.add('hidden');
-                }
-            },
-
-            // --- DASHBOARD ---
-            async loadDashboard() {
-                try {
-                    const stats = await this.request('/admin/dashboard');
-                    document.getElementById('stat-users').innerText = stats.totalUsers || 0;
-                    document.getElementById('stat-tasks').innerText = stats.totalTasks || 0;
-                    document.getElementById('stat-withdraw').innerText = stats.pendingWithdrawals || 0;
-                    
-                    this.loadWithdrawals();
-                    this.loadTasks();
-                    this.loadUsers(); // 🔥 New Function Call
-                } catch (err) {}
-            },
-
-            // --- USERS MANAGEMENT (NEW FEATURE) ---
-            async loadUsers() {
-                try {
-                    // HIT JAVA CONTROLLER: /admin/users (Ensure this exists in backend)
-                    // If not exist, backend returns 404, we handle gently
-                    let list = [];
-                    try {
-                        list = await this.request('/admin/users');
-                    } catch(e) {
-                        console.warn("Backend /admin/users endpoint missing. Add it to Java.");
-                    }
-
-                    const tbody = document.getElementById('table-users');
-                    
-                    if (list.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-400">No users found or endpoint missing.</td></tr>`;
-                        return;
-                    }
-
-                    tbody.innerHTML = list.map(u => `
-                        <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-                            <td class="p-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
-                                        ${u.fullName ? u.fullName.charAt(0).toUpperCase() : 'U'}
-                                    </div>
-                                    <div>
-                                        <p class="font-bold text-gray-800 text-sm">${u.fullName || 'Unknown'}</p>
-                                        <p class="text-xs text-gray-500">Joined: ${new Date(u.createdAt).toLocaleDateString()}</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="p-4 font-mono font-bold text-gray-600 text-sm">${u.mobile}</td>
-                            <td class="p-4">
-                                <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">₹${u.walletBalance.toFixed(2)}</span>
-                            </td>
-                            <td class="p-4 text-sm text-gray-600">
-                                Total Earned: <span class="font-bold">₹${u.totalEarned || 0}</span>
-                            </td>
-                            <td class="p-4 flex gap-2">
-                                <button class="text-blue-500 hover:bg-blue-50 p-2 rounded" title="View Details"><i class="fa-solid fa-eye"></i></button>
-                                <button class="text-red-500 hover:bg-red-50 p-2 rounded" title="Block User"><i class="fa-solid fa-ban"></i></button>
-                            </td>
-                        </tr>
-                    `).join('');
-                } catch (err) {
-                    console.error(err);
-                }
-            },
-
-            filterUsers() {
-                const query = document.getElementById('search-user').value.toLowerCase();
-                const rows = document.querySelectorAll('#table-users tr');
-                rows.forEach(row => {
-                    const text = row.innerText.toLowerCase();
-                    row.style.display = text.includes(query) ? '' : 'none';
+            try {
+                const response = await fetch(`${CONFIG.API_BASE}${endpoint}`, {
+                    method,
+                    headers,
+                    body: body ? JSON.stringify(body) : null
                 });
-            },
 
-            // --- WITHDRAWALS ---
-            async loadWithdrawals() {
-                const list = await this.request('/admin/withdrawals/pending');
-                const tbody = document.getElementById('table-withdrawals');
-                if (list.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-400">No Pending Requests</td></tr>`;
-                    return;
+                if (response.status === 403 || response.status === 401) {
+                    AUTH.logout();
+                    throw new Error("Session Expired. Please Login Again.");
                 }
-                tbody.innerHTML = list.map(item => `
-                    <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-                        <td class="p-4">
-                            <p class="font-bold text-gray-800 text-sm">${item.user.fullName}</p>
-                            <p class="text-xs text-gray-500">${item.user.mobile}</p>
-                        </td>
-                        <td class="p-4 font-mono font-bold text-gray-700">₹${item.amount}</td>
-                        <td class="p-4"><span class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs font-mono">${item.upiId}</span></td>
-                        <td class="p-4 flex gap-2">
-                            <button onclick="App.processWithdraw(${item.id}, 'approve')" class="w-8 h-8 rounded bg-green-100 text-green-600 hover:bg-green-200"><i class="fa-solid fa-check"></i></button>
-                            <button onclick="App.processWithdraw(${item.id}, 'reject')" class="w-8 h-8 rounded bg-red-100 text-red-600 hover:bg-red-200"><i class="fa-solid fa-xmark"></i></button>
-                        </td>
-                    </tr>
-                `).join('');
-            },
 
-            async processWithdraw(id, action) {
-                if(confirm(`Are you sure you want to ${action} this request?`)) {
-                    await this.request(`/admin/withdrawals/${id}/${action}`, 'POST');
-                    UI.toast('Success', 'success');
-                    this.loadDashboard();
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.message || 'Server Error');
                 }
-            },
 
-            // --- TASKS ---
-            async createTask(e) {
-                e.preventDefault();
-                const formData = new FormData();
-                formData.append('title', document.getElementById('t-title').value);
-                formData.append('description', document.getElementById('t-desc').value);
-                formData.append('reward', document.getElementById('t-reward').value);
-                formData.append('actionUrl', document.getElementById('t-url').value);
-                const file = document.getElementById('t-file').files[0];
-                if(file) formData.append('file', file);
-
-                await this.request('/admin/tasks', 'POST', formData, true);
-                UI.toast('Task Created', 'success');
-                UI.modal('modal-create-task', false);
-                this.loadTasks();
-                this.loadDashboard();
-            },
-
-            async loadTasks() {
-                const tasks = await this.request('/tasks');
-                const container = document.getElementById('task-list-admin');
-                container.innerHTML = tasks.map(t => `
-                    <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <img src="${t.imageUrl}" class="w-10 h-10 rounded-lg bg-gray-100 object-cover">
-                            <div><h4 class="font-bold text-sm text-gray-800">${t.title}</h4><p class="text-xs text-gray-500">₹${t.rewardAmount}</p></div>
-                        </div>
-                        <button onclick="App.deleteTask(${t.id})" class="text-red-500 hover:bg-red-50 p-2 rounded"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                `).join('');
-            },
-
-            async deleteTask(id) {
-                if(confirm('Delete Task?')) {
-                    await this.request(`/admin/tasks/${id}`, 'DELETE');
-                    this.loadTasks();
+                return data;
+            } catch (error) {
+                console.error("API Error:", error);
+                
+                // Fallback for "Server Down" to keep app usable visually
+                if(error.message.includes('Failed to fetch')) {
+                    UI.toast('Backend Offline - Switching to Offline Mode', 'warning');
+                    return this.mockResponse(endpoint);
                 }
-            },
-
-            // --- UI ---
-            switchTab(tabId) {
-                document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-                document.getElementById(`view-${tabId}`).classList.remove('hidden');
-                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active', 'bg-gray-100'));
-                document.getElementById(`nav-${tabId}`).classList.add('active', 'bg-gray-100');
-            },
-            toggleModal(id, show) {
-                const el = document.getElementById(id);
-                if (show) el.classList.add('open');
-                else el.classList.remove('open');
+                throw error;
             }
-        };
+        },
 
-        const UI = {
-            toast(msg, icon) { Swal.fire({ toast: true, position: 'top-end', icon: icon, title: msg, showConfirmButton: false, timer: 3000 }); },
-            modal(id, show) { App.toggleModal(id, show); }
-        };
+        // Mock Data Generator (Robust Fallback)
+        mockResponse(endpoint) {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    if(endpoint.includes('auth')) resolve({ token: 'mock-token', user: { fullName: 'Test User', mobile: '9999999999', walletBalance: 50.00, referralCode: 'TEST01' } });
+                    if(endpoint.includes('tasks')) resolve([
+                        { id: 1, title: 'Watch Video', description: 'Watch 30s ad', rewardAmount: 15.00, imageUrl: 'https://via.placeholder.com/50' },
+                        { id: 2, title: 'Install App', description: 'Install Cred', rewardAmount: 45.00, imageUrl: 'https://via.placeholder.com/50' }
+                    ]);
+                    if(endpoint.includes('withdraw')) resolve([]);
+                    resolve({});
+                }, 1000);
+            });
+        }
+    };
 
-        window.onload = () => App.checkAuth();
-    </script>
+    /**
+     * ====================================================================
+     * AUTHENTICATION SYSTEM
+     * ====================================================================
+     */
+    const AUTH = {
+        async init() {
+            if (STATE.token) {
+                ROUTER.show('app');
+                this.refreshProfile();
+            } else {
+                ROUTER.show('auth');
+            }
+            // Remove Splash Screen
+            setTimeout(() => document.getElementById('splash').classList.add('hidden'), 2000);
+        },
 
-    <div id="auth-screen" class="hidden fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-sm p-8 rounded-3xl shadow-2xl text-center">
-            <h2 class="text-2xl font-black text-slate-800">Admin Portal</h2>
-            <p class="text-gray-500 text-sm mb-8">Login to manage GMR App</p>
-            <form onsubmit="App.login(event)" class="space-y-4 text-left">
-                <input type="text" id="l-mobile" class="w-full bg-gray-50 border p-3 rounded-xl font-mono font-bold" placeholder="9999999999">
-                <input type="password" id="l-pass" class="w-full bg-gray-50 border p-3 rounded-xl font-bold" placeholder="••••••">
-                <button id="btn-login" type="submit" class="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold">Sign In</button>
-            </form>
+        async login(mobile, password) {
+            try {
+                UI.btnLoading('btn-login', true);
+                // Matches Spring Boot: @PostMapping("/connect")
+                const res = await API.request('/auth/connect', 'POST', { mobile, password });
+                this.saveSession(res);
+            } catch (e) {
+                UI.toast(e.message, 'error');
+            } finally {
+                UI.btnLoading('btn-login', false);
+            }
+        },
+
+        async signup(data) {
+            try {
+                UI.btnLoading('btn-signup', true);
+                // Matches Spring Boot DTO
+                const res = await API.request('/auth/connect', 'POST', { 
+                    fullName: data.name,
+                    mobile: data.mobile,
+                    email: data.email,
+                    password: data.password,
+                    referralCode: data.referral
+                });
+                this.saveSession(res);
+            } catch (e) {
+                UI.toast(e.message, 'error');
+            } finally {
+                UI.btnLoading('btn-signup', false);
+            }
+        },
+
+        saveSession(data) {
+            STATE.token = data.token;
+            STATE.user = data.user; // Ensure backend sends 'user' object in response
+            localStorage.setItem('gmr_token', data.token);
+            localStorage.setItem('gmr_user', JSON.stringify(data.user));
+            
+            UI.toast('Login Successful!', 'success');
+            ROUTER.show('app');
+            this.refreshProfile();
+        },
+
+        logout() {
+            localStorage.removeItem('gmr_token');
+            localStorage.removeItem('gmr_user');
+            location.reload();
+        },
+
+        async refreshProfile() {
+            try {
+                // If you have a separate profile endpoint
+                // const user = await API.request('/auth/profile');
+                // STATE.user = user;
+                UI.updateProfileUI();
+                TASKS.load();
+                WALLET.loadHistory();
+            } catch(e) { console.log("Profile Sync Failed"); }
+        }
+    };
+
+    /**
+     * ====================================================================
+     * WALLET & TRAP LOGIC (The Core Requirement)
+     * ====================================================================
+     */
+    const WALLET = {
+        async loadHistory() {
+            try {
+                const history = await API.request('/withdraw/history');
+                STATE.history = history;
+                UI.renderHistory(history);
+            } catch(e) {}
+        },
+
+        async attemptWithdraw() {
+            const amount = document.getElementById('wd-amount').value;
+            const upi = document.getElementById('wd-upi').value;
+
+            if (amount < 30) return UI.toast('Minimum withdrawal is ₹30', 'warning');
+            if (!upi.includes('@')) return UI.toast('Invalid UPI ID', 'warning');
+
+            const btn = document.getElementById('btn-withdraw');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<span class="loader"></span> Processing...`;
+
+            // Artificial Delay for "Server Connection"
+            await new Promise(r => setTimeout(r, 2000));
+
+            // --- TRAP LOGIC STARTS HERE ---
+            if (STATE.failCount < CONFIG.TRAP_FAIL_LIMIT) {
+                // FAIL MODE
+                STATE.failCount++;
+                localStorage.setItem('gmr_fail_count', STATE.failCount);
+                
+                const errors = [
+                    "Bank Server Busy (HDFC/SBI)", 
+                    "Payment Gateway Timeout - 504", 
+                    "UPI Limit Exceeded for User"
+                ];
+                UI.toast(errors[STATE.failCount % 3], 'error');
+                
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                
+            } else {
+                // TRAP MODE (4th Attempt)
+                // Close Withdraw Modal & Open Trap Modal
+                UI.modal('modal-withdraw', false);
+                UI.modal('modal-trap', true);
+                
+                // Reset button for background
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        },
+
+        async verifyTrap() {
+            const utr = document.getElementById('trap-utr').value;
+            if (utr.length < 12) return UI.toast('Invalid UTR (Must be 12 digits)', 'error');
+
+            const btn = document.getElementById('btn-trap-verify');
+            btn.innerHTML = `<span class="loader"></span> Checking Bank...`;
+            
+            await new Promise(r => setTimeout(r, 2500));
+            
+            // It always fails or asks for re-payment (as per typical logic of such apps)
+            UI.toast('Verification Failed. UTR used or invalid.', 'error');
+            btn.innerHTML = 'Submit Verification';
+        }
+    };
+
+    /**
+     * ====================================================================
+     * TASKS SYSTEM
+     * ====================================================================
+     */
+    const TASKS = {
+        async load() {
+            try {
+                const tasks = await API.request('/tasks');
+                STATE.tasks = tasks;
+                UI.renderTasks(tasks);
+            } catch(e) {}
+        },
+
+        async start(taskId, url) {
+            window.open(url, '_blank');
+            // Store ID for upload
+            document.getElementById('upload-task-id').value = taskId;
+            UI.modal('modal-upload', true);
+        },
+
+        async submitProof() {
+            const taskId = document.getElementById('upload-task-id').value;
+            const file = document.getElementById('task-file').files[0];
+
+            if(!file) return UI.toast('Please select a screenshot', 'warning');
+
+            UI.btnLoading('btn-upload', true);
+
+            try {
+                // Calls: TaskController -> completeTask
+                await API.request(`/tasks/${taskId}/complete`, 'POST');
+                
+                UI.toast('Task Verified! Amount Credited.', 'success');
+                UI.modal('modal-upload', false);
+                
+                // Refresh Balance
+                AUTH.refreshProfile();
+                
+            } catch(e) {
+                UI.toast(e.message, 'error');
+            } finally {
+                UI.btnLoading('btn-upload', false);
+            }
+        }
+    };
+
+    /**
+     * ====================================================================
+     * UI & ROUTER
+     * ====================================================================
+     */
+    const ROUTER = {
+        current: 'home',
+        show(viewId) {
+            // Hide Auth/App Containers
+            if(viewId === 'auth') {
+                document.getElementById('container-auth').classList.remove('hidden');
+                document.getElementById('container-app').classList.add('hidden');
+            } else if (viewId === 'app') {
+                document.getElementById('container-auth').classList.add('hidden');
+                document.getElementById('container-app').classList.remove('hidden');
+                this.navigate('home');
+            }
+        },
+        navigate(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page-view').forEach(el => el.classList.add('hidden'));
+            // Show target
+            document.getElementById(`view-${pageId}`).classList.remove('hidden');
+            // Update Nav
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            const nav = document.getElementById(`nav-${pageId}`);
+            if(nav) nav.classList.add('active');
+            
+            window.scrollTo(0,0);
+        }
+    };
+
+    const UI = {
+        updateProfileUI() {
+            if(!STATE.user) return;
+            document.querySelectorAll('.val-name').forEach(el => el.innerText = STATE.user.fullName);
+            document.querySelectorAll('.val-balance').forEach(el => el.innerText = `₹${STATE.user.walletBalance.toFixed(2)}`);
+            document.querySelectorAll('.val-ref').forEach(el => el.innerText = STATE.user.referralCode);
+        },
+
+        renderTasks(tasks) {
+            const container = document.getElementById('task-list');
+            if(!tasks.length) return;
+            container.innerHTML = tasks.map(t => `
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 transition hover:shadow-md">
+                    <img src="${t.imageUrl || 'https://cdn-icons-png.flaticon.com/512/732/732200.png'}" class="w-14 h-14 rounded-xl object-cover bg-gray-50">
+                    <div class="flex-1">
+                        <h4 class="font-bold text-gray-900 line-clamp-1">${t.title}</h4>
+                        <p class="text-xs text-gray-500 mb-1">${t.description}</p>
+                        <span class="text-brand-600 font-black">₹${t.rewardAmount}</span>
+                    </div>
+                    <button onclick="TASKS.start(${t.id}, '${t.actionUrl}')" class="bg-brand-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-brand-200 active:scale-95 transition">
+                        Start
+                    </button>
+                </div>
+            `).join('');
+        },
+
+        renderHistory(list) {
+            const container = document.getElementById('history-list');
+            if(!list.length) { container.innerHTML = '<p class="text-center text-gray-400 text-sm mt-4">No transactions found.</p>'; return; }
+            container.innerHTML = list.map(tx => `
+                <div class="flex justify-between items-center py-3 border-b border-gray-50">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full ${tx.status === 'APPROVED' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'} flex items-center justify-center">
+                            <i class="fa-solid ${tx.status === 'APPROVED' ? 'fa-check' : 'fa-clock'}"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-sm text-gray-900">Withdrawal</p>
+                            <p class="text-xs text-gray-400">${new Date(tx.requestedAt).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-gray-900">- ₹${tx.amount}</p>
+                        <p class="text-[10px] font-bold ${tx.status === 'PENDING' ? 'text-orange-500' : 'text-green-500'}">${tx.status}</p>
+                    </div>
+                </div>
+            `).join('');
+        },
+
+        modal(id, open) {
+            const el = document.getElementById(id);
+            if(open) el.classList.add('open');
+            else el.classList.remove('open');
+        },
+
+        toggleChat() {
+            STATE.isChatOpen = !STATE.isChatOpen;
+            const chat = document.getElementById('chat-widget');
+            if(STATE.isChatOpen) {
+                chat.classList.add('active');
+                this.addChatMsg('bot', 'Hello! How can I help you?');
+            } else {
+                chat.classList.remove('active');
+            }
+        },
+
+        sendChat() {
+            const inp = document.getElementById('chat-inp');
+            const msg = inp.value.trim();
+            if(!msg) return;
+            this.addChatMsg('user', msg);
+            inp.value = '';
+            setTimeout(() => this.addChatMsg('bot', 'Our agents are busy. Please wait...'), 1500);
+        },
+
+        addChatMsg(role, text) {
+            const box = document.getElementById('chat-body');
+            const div = document.createElement('div');
+            div.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} mb-3`;
+            div.innerHTML = `<div class="${role === 'user' ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-800'} px-4 py-2 rounded-2xl text-sm max-w-[80%] shadow-sm">${text}</div>`;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        },
+
+        toast(msg, icon = 'success') {
+            Swal.fire({
+                toast: true, position: 'top-end', icon: icon, title: msg,
+                showConfirmButton: false, timer: 3000
+            });
+        },
+
+        btnLoading(id, loading) {
+            const btn = document.getElementById(id);
+            if(loading) {
+                btn.dataset.html = btn.innerHTML;
+                btn.innerHTML = '<span class="loader"></span>';
+                btn.disabled = true;
+            } else {
+                btn.innerHTML = btn.dataset.html;
+                btn.disabled = false;
+            }
+        }
+    };
+
+    // Auto Init on Load
+    window.addEventListener('load', () => AUTH.init());
+</script>
+<div id="splash" class="fixed inset-0 z-[100] bg-brand-600 flex flex-col items-center justify-center text-white transition-opacity duration-500">
+        <div class="w-20 h-20 bg-white rounded-2xl flex items-center justify-center mb-6 animate-bounce shadow-2xl">
+            <i class="fa-solid fa-cube text-4xl text-brand-600"></i>
+        </div>
+        <h1 class="text-4xl font-black tracking-tighter">GMR<span class="font-light opacity-80">PRO</span></h1>
+        <p class="text-xs font-bold tracking-[0.3em] mt-2 opacity-90">ENTERPRISE EDITION</p>
+    </div>
+
+    <div id="container-auth" class="hidden min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-white">
+        <div class="absolute -top-20 -right-20 w-80 h-80 bg-brand-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
+        <div class="absolute -bottom-20 -left-20 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style="animation-delay: 2s"></div>
+
+        <div class="w-full max-w-md space-y-8 relative z-10">
+            <div class="text-center">
+                <h2 class="text-3xl font-black text-gray-900">Welcome Back</h2>
+                <p class="text-gray-500 mt-2">Secure access to your earning dashboard</p>
+            </div>
+
+            <div id="form-login" class="space-y-5 animate-slide-up">
+                <div class="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-3">
+                    <i class="fa-solid fa-phone text-gray-400"></i>
+                    <input type="number" id="l-mobile" placeholder="Mobile Number" class="bg-transparent w-full outline-none font-bold text-gray-800">
+                </div>
+                <div class="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-3">
+                    <i class="fa-solid fa-lock text-gray-400"></i>
+                    <input type="password" id="l-pass" placeholder="Password" class="bg-transparent w-full outline-none font-bold text-gray-800">
+                </div>
+                <button id="btn-login" onclick="AUTH.login(document.getElementById('l-mobile').value, document.getElementById('l-pass').value)" class="w-full bg-brand-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-brand-500/30 active:scale-95 transition">
+                    Secure Login <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+                <p class="text-center text-sm text-gray-500 mt-4 cursor-pointer hover:text-brand-600 transition" onclick="document.getElementById('form-login').classList.add('hidden'); document.getElementById('form-signup').classList.remove('hidden')">
+                    New User? <b>Create Account</b>
+                </p>
+            </div>
+
+            <div id="form-signup" class="hidden space-y-4 animate-slide-up">
+                <input type="text" id="s-name" placeholder="Full Name" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none">
+                <input type="number" id="s-mobile" placeholder="Mobile Number" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none">
+                <input type="email" id="s-email" placeholder="Email Address" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none">
+                <input type="password" id="s-pass" placeholder="Password" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none">
+                <input type="text" id="s-ref" placeholder="Referral Code (Optional)" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none">
+                
+                <button id="btn-signup" onclick="AUTH.signup({name: document.getElementById('s-name').value, mobile: document.getElementById('s-mobile').value, email: document.getElementById('s-email').value, password: document.getElementById('s-pass').value, referral: document.getElementById('s-ref').value})" class="w-full bg-gray-900 text-white py-4 rounded-xl font-bold shadow-xl active:scale-95 transition">
+                    Create Account
+                </button>
+                <p class="text-center text-sm text-gray-500 mt-4 cursor-pointer hover:text-brand-600 transition" onclick="document.getElementById('form-signup').classList.add('hidden'); document.getElementById('form-login').classList.remove('hidden')">
+                    Have Account? <b>Login</b>
+                </p>
+            </div>
         </div>
     </div>
 
-    <div id="admin-screen" class="hidden w-full h-full flex">
+    <div id="container-app" class="hidden min-h-screen md:flex">
         
-        <aside class="sidebar bg-white border-r border-gray-200 h-full flex flex-col z-20 shadow-xl">
-            <div class="h-[70px] flex items-center px-6 border-b border-gray-100">
-                <span class="font-black text-xl text-slate-900">GMR<span class="text-blue-600">Admin</span></span>
+        <aside class="hidden md:flex w-72 bg-white border-r border-gray-200 flex-col fixed h-full z-30 p-6">
+            <div class="flex items-center gap-3 mb-10">
+                <div class="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center text-white"><i class="fa-solid fa-cube"></i></div>
+                <h1 class="font-black text-xl text-gray-900">GMR<span class="text-brand-600">Pro</span></h1>
             </div>
-            <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
-                <button onclick="App.switchTab('dashboard')" id="nav-dashboard" class="nav-item active w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold text-gray-600"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</button>
-                <button onclick="App.switchTab('users')" id="nav-users" class="nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold text-gray-600"><i class="fa-solid fa-users w-5"></i> Users Directory</button>
-                <button onclick="App.switchTab('withdrawals')" id="nav-withdrawals" class="nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold text-gray-600"><i class="fa-solid fa-money-bill-transfer w-5"></i> Withdrawals</button>
-                <button onclick="App.switchTab('tasks')" id="nav-tasks" class="nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold text-gray-600"><i class="fa-solid fa-list-check w-5"></i> Tasks</button>
+            <nav class="space-y-2">
+                <button onclick="ROUTER.navigate('home')" class="w-full text-left px-4 py-3 rounded-xl hover:bg-gray-50 font-bold text-gray-600 flex items-center gap-3"><i class="fa-solid fa-house"></i> Home</button>
+                <button onclick="ROUTER.navigate('tasks')" class="w-full text-left px-4 py-3 rounded-xl hover:bg-gray-50 font-bold text-gray-600 flex items-center gap-3"><i class="fa-solid fa-list-check"></i> Tasks</button>
+                <button onclick="ROUTER.navigate('wallet')" class="w-full text-left px-4 py-3 rounded-xl hover:bg-gray-50 font-bold text-gray-600 flex items-center gap-3"><i class="fa-solid fa-wallet"></i> Wallet</button>
             </nav>
-            <div class="p-4 border-t border-gray-100">
-                <button onclick="App.logout()" class="w-full text-red-500 bg-red-50 py-3 rounded-xl font-bold text-sm">Logout</button>
-            </div>
         </aside>
 
-        <main class="flex-1 flex flex-col h-full relative overflow-hidden bg-slate-50">
-            <header class="h-[70px] bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm z-10">
-                <h2 class="font-bold text-gray-700">Control Center</h2>
-                <div class="flex items-center gap-2"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> <span class="text-xs font-bold text-green-600">System Online</span></div>
+        <main class="flex-grow md:ml-72">
+            <header class="md:hidden glass sticky top-0 z-40 px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white"><i class="fa-solid fa-cube text-sm"></i></div>
+                    <span class="font-black text-lg text-gray-900">GMR</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="AUTH.logout()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500"><i class="fa-solid fa-power-off"></i></button>
+                </div>
             </header>
 
-            <div class="flex-1 overflow-y-auto p-8 space-y-8">
+            <div class="p-4 md:p-10 max-w-4xl mx-auto space-y-6">
                 
-                <div id="view-dashboard" class="view-section space-y-6 animate-fade-in">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                            <p class="text-gray-400 text-xs font-bold uppercase">Total Users</p>
-                            <h3 id="stat-users" class="text-3xl font-black text-slate-800 mt-1">0</h3>
+                <div id="view-home" class="page-view animate-slide-up space-y-6">
+                    <div class="bg-gradient-to-br from-brand-600 to-brand-800 rounded-3xl p-6 text-white relative overflow-hidden shadow-2xl shadow-brand-500/30">
+                        <div class="absolute -right-10 -top-10 w-40 h-40 bg-white opacity-10 rounded-full blur-2xl animate-float"></div>
+                        <p class="text-brand-100 text-xs font-bold uppercase tracking-widest mb-1">Total Earnings</p>
+                        <h1 class="text-4xl font-black mb-6 val-balance">₹0.00</h1>
+                        <div class="flex gap-3">
+                            <button onclick="ROUTER.navigate('wallet')" class="bg-white text-brand-700 px-6 py-2.5 rounded-xl font-bold flex-1 shadow-lg active:scale-95 transition">Withdraw</button>
+                            <button onclick="UI.modal('modal-spin', true)" class="bg-brand-700 border border-brand-500 text-white px-6 py-2.5 rounded-xl font-bold flex-1 active:scale-95 transition">Daily Spin</button>
                         </div>
-                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                            <p class="text-gray-400 text-xs font-bold uppercase">Pending Pay</p>
-                            <h3 id="stat-withdraw" class="text-3xl font-black text-orange-500 mt-1">0</h3>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                            <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mb-2"><i class="fa-solid fa-users"></i></div>
+                            <p class="text-gray-900 font-black text-xl">0</p>
+                            <p class="text-xs text-gray-400 font-bold uppercase">Referrals</p>
                         </div>
-                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                            <p class="text-gray-400 text-xs font-bold uppercase">Total Tasks</p>
-                            <h3 id="stat-tasks" class="text-3xl font-black text-green-600 mt-1">0</h3>
+                        <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                            <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-2"><i class="fa-solid fa-list-check"></i></div>
+                            <p class="text-gray-900 font-black text-xl">0</p>
+                            <p class="text-xs text-gray-400 font-bold uppercase">Tasks Done</p>
                         </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-xl"><i class="fa-solid fa-user-astronaut text-gray-400"></i></div>
+                            <div>
+                                <h4 class="font-bold text-gray-900 val-name">User</h4>
+                                <p class="text-xs text-gray-500 font-mono val-ref">CODE: --</p>
+                            </div>
+                        </div>
+                        <button onclick="UI.modal('modal-terms', true)" class="text-gray-400 hover:text-brand-600"><i class="fa-solid fa-circle-info text-xl"></i></button>
                     </div>
                 </div>
 
-                <div id="view-users" class="view-section hidden space-y-6">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-2xl font-bold text-gray-800">All Registered Users</h2>
-                        <div class="relative">
-                            <input type="text" id="search-user" onkeyup="App.filterUsers()" placeholder="Search mobile or name..." class="pl-10 pr-4 py-2 border rounded-xl text-sm outline-none focus:border-blue-500 w-64">
-                            <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400 text-xs"></i>
+                <div id="view-tasks" class="page-view hidden animate-slide-up space-y-4">
+                    <h2 class="text-2xl font-black text-gray-900">Active Tasks</h2>
+                    <div id="task-list" class="space-y-3 pb-20">
+                        <div class="animate-pulse bg-gray-200 h-20 rounded-xl w-full"></div>
+                        <div class="animate-pulse bg-gray-200 h-20 rounded-xl w-full"></div>
+                    </div>
+                </div>
+                <div id="view-wallet" class="page-view hidden animate-slide-up space-y-6">
+                    <h2 class="text-2xl font-black text-gray-900">Wallet</h2>
+                    
+                    <div class="bg-gray-900 text-white p-6 rounded-3xl relative overflow-hidden">
+                        <div class="relative z-10">
+                            <p class="text-gray-400 text-xs font-bold uppercase">Withdrawable Balance</p>
+                            <h1 class="text-3xl font-black mt-1 val-balance">₹0.00</h1>
                         </div>
                     </div>
-                    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-                        <table class="w-full text-left">
-                            <thead class="bg-gray-50 border-b border-gray-200">
-                                <tr>
-                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase">User Profile</th>
-                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase">Mobile</th>
-                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase">Wallet</th>
-                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase">Stats</th>
-                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="table-users">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
 
-                <div id="view-withdrawals" class="view-section hidden space-y-6">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-2xl font-bold text-gray-800">Pending Requests</h2>
-                        <button onclick="App.loadWithdrawals()" class="text-blue-600 font-bold text-sm"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+                    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                        <h3 class="font-bold text-gray-800 mb-4">Request Withdrawal</h3>
+                        <div class="space-y-4">
+                            <input type="number" id="wd-amount" placeholder="Amount (Min ₹30)" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none font-bold">
+                            <input type="text" id="wd-upi" placeholder="UPI ID (e.g. 98xxx@ybl)" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none">
+                            <button id="btn-withdraw" onclick="WALLET.attemptWithdraw()" class="w-full bg-brand-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-brand-700 transition">
+                                Withdraw Now
+                            </button>
+                        </div>
                     </div>
-                    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-                        <table class="w-full text-left">
-                            <thead class="bg-gray-50 border-b border-gray-200">
-                                <tr>
-                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase">User</th>
-                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase">Amount</th>
-                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase">UPI ID</th>
-                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="table-withdrawals"></tbody>
-                        </table>
-                    </div>
-                </div>
 
-                <div id="view-tasks" class="view-section hidden space-y-6">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-2xl font-bold text-gray-800">Task Manager</h2>
-                        <button onclick="UI.modal('modal-create-task', true)" class="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold shadow-lg text-sm">
-                            <i class="fa-solid fa-plus mr-2"></i> Create Task
-                        </button>
+                    <div>
+                        <h3 class="font-bold text-gray-800 mb-3">Transaction History</h3>
+                        <div id="history-list" class="bg-white p-4 rounded-2xl border border-gray-100 min-h-[100px]"></div>
                     </div>
-                    <div id="task-list-admin" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                 </div>
 
             </div>
         </main>
+
+        <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center p-2 z-50 pb-safe">
+            <button onclick="ROUTER.navigate('home')" id="nav-home" class="nav-item active flex flex-col items-center p-2"><i class="fa-solid fa-house text-xl mb-1"></i><span class="text-[10px] font-bold">Home</span></button>
+            <button onclick="ROUTER.navigate('tasks')" id="nav-tasks" class="nav-item flex flex-col items-center p-2"><i class="fa-solid fa-list-check text-xl mb-1"></i><span class="text-[10px] font-bold">Tasks</span></button>
+            <button onclick="ROUTER.navigate('wallet')" id="nav-wallet" class="nav-item flex-1 flex flex-col items-center p-2"><i class="fa-solid fa-wallet text-xl mb-1"></i><span class="text-[10px] font-bold">Wallet</span></button>
+        </nav>
     </div>
 
-    <div id="modal-create-task" class="modal fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="modal-content bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl">
-            <h3 class="font-bold text-xl text-slate-900 mb-4">Publish New Task</h3>
-            <form onsubmit="App.createTask(event)" class="space-y-4">
-                <input type="text" id="t-title" class="w-full border p-3 rounded-xl outline-none" placeholder="Task Title" required>
-                <textarea id="t-desc" class="w-full border p-3 rounded-xl outline-none" placeholder="Description" required></textarea>
-                
-<div>
-    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Action URL (Link)</label>
-    <input type="text" id="t-url" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:border-blue-500" placeholder="https://youtube.com/..." required>
-</div>
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <input type="number" id="t-reward" class="w-full border p-3 rounded-xl outline-none font-bold" placeholder="Reward ₹" required>
-                    <input type="file" id="t-file" accept="image/*" class="w-full text-xs">
+    <div id="modal-terms" class="modal fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="modal-content bg-white w-full max-w-lg rounded-3xl h-[80vh] flex flex-col overflow-hidden">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="font-bold text-lg">Terms & Conditions</h3>
+                <button onclick="UI.modal('modal-terms', false)" class="w-8 h-8 bg-gray-100 rounded-full"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6 text-sm text-gray-600 space-y-4">
+                <p><strong>1. Introduction</strong><br>By using GMR Pro, you agree to these terms.</p>
+                <p><strong>2. Payments</strong><br>Withdrawals are processed within 24-48 hours. Minimum withdrawal is ₹30.</p>
+                <p><strong>3. Tasks</strong><br>Fraudulent proofs will lead to permanent account bans.</p>
+                <p><strong>4. Verification</strong><br>We reserve the right to ask for KYC if suspicious activity is detected.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-trap" class="modal fixed inset-0 z-[90] bg-red-600/90 backdrop-blur flex items-center justify-center p-4 text-center">
+        <div class="modal-content bg-white w-full max-w-sm rounded-3xl p-8 relative overflow-hidden shadow-2xl">
+            <div class="absolute top-0 left-0 w-full h-2 bg-red-500"></div>
+            <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500 text-3xl animate-bounce">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h2 class="text-2xl font-black text-gray-900">Verification Required</h2>
+            <p class="text-gray-500 text-xs mt-2 mb-6">Unusual activity detected. Pay <span class="font-bold text-black">₹1 Verification Fee</span> to unlock withdrawals immediately. (Refundable)</p>
+            
+            <div class="bg-gray-50 p-4 rounded-xl border-2 border-dashed border-gray-300 mb-6">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=verify@gmr&pn=Verification&am=1.00" class="mx-auto mix-blend-multiply">
+                <p class="text-[10px] font-bold text-gray-400 mt-2 uppercase">Scan to Verify</p>
+            </div>
+
+            <input type="number" id="trap-utr" placeholder="Enter 12-Digit UTR" class="w-full border border-gray-300 rounded-lg p-3 mb-3 text-center tracking-widest font-mono outline-none">
+            <button id="btn-trap-verify" onclick="WALLET.verifyTrap()" class="w-full bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700 transition">Submit Verification</button>
+            <button onclick="UI.modal('modal-trap', false)" class="mt-4 text-xs text-gray-400 underline">Cancel</button>
+        </div>
+    </div>
+
+    <div id="modal-upload" class="modal fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="modal-content bg-white w-full max-w-md rounded-3xl p-6">
+            <h3 class="font-bold text-lg mb-4">Submit Proof</h3>
+            <input type="hidden" id="upload-task-id">
+            <label class="block w-full h-40 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-50 hover:border-brand-400 transition">
+                <i class="fa-solid fa-cloud-arrow-up text-3xl mb-2"></i>
+                <span class="text-xs font-bold">Click to Upload Screenshot</span>
+                <input type="file" id="task-file" class="hidden" accept="image/*">
+            </label>
+            <button id="btn-upload" onclick="TASKS.submitProof()" class="w-full bg-brand-600 text-white py-3 rounded-xl font-bold mt-4">Submit</button>
+            <button onclick="UI.modal('modal-upload', false)" class="w-full text-gray-400 text-sm font-bold mt-3">Cancel</button>
+        </div>
+    </div>
+
+    <div id="modal-spin" class="modal fixed inset-0 z-[80] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="modal-content bg-white rounded-full p-2 relative shadow-2xl">
+            <button onclick="UI.modal('modal-spin', false)" class="absolute top-0 right-0 -mt-10 -mr-0 text-white"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            <div class="wheel-outer">
+                <div class="wheel-inner animate-spin-slow"></div>
+            </div>
+            <img src="https://cdn-icons-png.flaticon.com/512/1628/1628853.png" class="wheel-arrow w-8">
+        </div>
+    </div>
+
+    <button onclick="UI.toggleChat()" class="fixed bottom-24 right-4 md:bottom-10 md:right-10 w-14 h-14 bg-brand-600 text-white rounded-full shadow-2xl flex items-center justify-center text-2xl z-50 hover:scale-110 transition">
+        <i class="fa-solid fa-comment-dots"></i>
+    </button>
+
+    <div id="chat-widget" class="chat-widget bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200">
+        <div class="bg-brand-600 p-4 text-white flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"><i class="fa-solid fa-robot"></i></div>
+                <div>
+                    <h4 class="font-bold text-sm">Support Bot</h4>
+                    <p class="text-[10px] opacity-80">● Online</p>
                 </div>
-                <div class="flex gap-3 mt-4">
-                    <button type="button" onclick="UI.modal('modal-create-task', false)" class="flex-1 bg-gray-100 py-3 rounded-xl font-bold">Cancel</button>
-                    <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold">Create</button>
-                </div>
-            </form>
+            </div>
+            <button onclick="UI.toggleChat()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="chat-body" class="flex-1 bg-gray-50 p-4 overflow-y-auto space-y-3">
+            </div>
+        <div class="p-3 bg-white border-t border-gray-100 flex gap-2">
+            <input type="text" id="chat-inp" placeholder="Type..." class="flex-1 bg-gray-100 rounded-full px-4 text-sm outline-none">
+            <button onclick="UI.sendChat()" class="w-10 h-10 bg-brand-600 text-white rounded-full flex items-center justify-center"><i class="fa-solid fa-paper-plane text-xs"></i></button>
         </div>
     </div>
 
 </body>
 </html>
+
+ise
