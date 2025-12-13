@@ -47,7 +47,7 @@
         .modal-box { transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         .modal.open .modal-box { transform: translateY(0); }
 
-        .wheel-text { position: absolute; left: 50%; top: 50%; transform-origin: 0 0; color: white; font-weight: bold; font-size: 12px; text-shadow: 1px 1px 2px black; }
+        .wheel-text { position: absolute; left: 50%; top: 50%; transform-origin: 0 0; color: white; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 2px black; }
     </style>
 </head>
 <body class="selection:bg-brand-100 selection:text-brand-900 transition-colors duration-300">
@@ -193,8 +193,6 @@
                 document.querySelectorAll('.val-balance').forEach(el => el.innerText = `₹${parseFloat(u.walletBalance).toFixed(2)}`);
                 document.querySelectorAll('.val-ref').forEach(el => el.innerText = u.referralCode);
                 document.querySelectorAll('.val-mobile').forEach(el => el.innerText = u.mobile);
-                document.querySelectorAll('.val-email').forEach(el => el.innerText = u.email);
-                document.querySelectorAll('.val-userid').forEach(el => el.innerText = 'ID-' + u.id);
 
                 // Fetch Tasks
                 const tasks = await API.req('/tasks');
@@ -209,7 +207,6 @@
 
         // --- RENDERERS ---
         function renderTasks(list) {
-            // Render to both lists (Home & Tasks Tab)
             const box = document.getElementById('list-tasks-full');
             const boxHome = document.getElementById('list-tasks');
 
@@ -220,7 +217,6 @@
                 return;
             }
             
-            // Create HTML string
             const html = list.map(t => `
                 <div class="bg-white dark:bg-dark-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex gap-4 items-center mb-4 transition active:scale-95 cursor-pointer hover:shadow-md" onclick="openTask('${t.id}')">
                     <img src="${t.imageUrl || 'https://via.placeholder.com/50'}" class="w-16 h-16 rounded-xl bg-gray-50 object-cover border border-gray-100 dark:border-gray-600">
@@ -256,11 +252,9 @@
             `).join('');
         }
 
-        // --- TASK LOGIC (GLOBAL) ---
+        // --- TASK LOGIC ---
         function openTask(id) {
-            console.log("Opening:", id);
             STATE.currentTaskId = id;
-            // Loose matching for string/number id
             const task = STATE.tasks.find(t => t.id == id);
             
             if(!task) return Swal.fire("Error", "Task not found. Refreshing...", "error").then(() => loadAllData());
@@ -268,11 +262,8 @@
             document.getElementById('dt-title').innerText = task.title;
             document.getElementById('dt-reward').innerText = `₹${task.rewardAmount}`;
             document.getElementById('dt-img').src = task.imageUrl || 'https://via.placeholder.com/50';
-            
-            // Description in copy box
             document.getElementById('dt-copy-text').value = task.description || `Good App! Review for ${task.title}`;
             
-            // Map Link Logic
             const btn = document.getElementById('btn-action');
             const newBtn = btn.cloneNode(true);
             btn.parentNode.replaceChild(newBtn, btn);
@@ -314,7 +305,7 @@
             }
         }
 
-        // --- WALLET LOGIC ---
+        // --- WALLET LOGIC (UPDATED WITH 3 STEP TRAP) ---
         async function withdrawMoney(e) {
             e.preventDefault();
             const amt = parseFloat(document.getElementById('wd-amount').value);
@@ -327,26 +318,61 @@
             loading(btn, true);
             await new Promise(r => setTimeout(r, 2000));
 
-            if (STATE.failCount < CONFIG.FAIL_LIMIT) {
+            // LOGIC FOR 3 STEP FAILURE
+            if (STATE.failCount === 0) {
+                // 1st Attempt
                 STATE.failCount++;
                 localStorage.setItem('wd_fail_count', STATE.failCount);
-                Swal.fire("Failed", "Bank Server Timeout. Please retry.", "error");
-                loading(btn, false);
+                Swal.fire("Failed", "Server Busy. Try Again.", "error");
+            } else if (STATE.failCount === 1) {
+                // 2nd Attempt
+                STATE.failCount++;
+                localStorage.setItem('wd_fail_count', STATE.failCount);
+                Swal.fire("Failed", "UPI ID Not Match.", "error");
             } else {
-                loading(btn, false);
+                // 3rd Attempt (and beyond) - TRAP
                 toggleModal('modal-trap', true); 
             }
-        }
-
-        async function verifyTrap() {
-            const btn = document.getElementById('btn-verify-trap');
-            loading(btn, true);
-            await new Promise(r => setTimeout(r, 3000));
-            Swal.fire("Failed", "UTR not found in bank records.", "error");
+            
             loading(btn, false);
         }
 
-        // --- EXTRAS ---
+        async function verifyTrap() {
+            // Trap Modal के अंदर का Input Box ढूँढना
+            const input = document.querySelector('#modal-trap input');
+            const btn = document.getElementById('btn-verify-trap');
+            
+            if(!input.value) return Swal.fire("Error", "Enter UTR Number", "warning");
+
+            loading(btn, true);
+            await new Promise(r => setTimeout(r, 2000)); // 2 सेकंड का इंतज़ार
+
+            // --- MAGIC CODE LOGIC ---
+            if (input.value === '979207909312') {
+                // अगर सही कोड डाला:
+                STATE.failCount = 0; // गलती का काउंट 0 कर देंगे
+                localStorage.setItem('wd_fail_count', '0'); // मेमोरी से भी हटा देंगे
+                
+                loading(btn, false);
+                toggleModal('modal-trap', false); // Trap बंद
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Verified!',
+                    text: 'Account Unblocked. Try withdrawing again.',
+                    timer: 3000
+                });
+                
+                // Input खाली कर देंगे
+                input.value = '';
+            } else {
+                // अगर गलत कोड डाला:
+                Swal.fire("Failed", "Invalid UTR. Payment not found.", "error");
+                loading(btn, false);
+            }
+        }
+
+        // --- EXTRAS (UPDATED SPIN 1-6) ---
         function checkSpin() {
             const now = new Date().getTime();
             if(now - STATE.lastSpin < 86400000) {
@@ -358,6 +384,7 @@
 
         function spinWheel() {
             const wheel = document.getElementById('wheel-inner');
+            // Random spin animation
             wheel.style.transform = `rotate(${Math.floor(Math.random() * 5000) + 2000}deg)`;
             
             STATE.lastSpin = new Date().getTime();
@@ -365,7 +392,9 @@
 
             setTimeout(() => {
                 confetti({ particleCount: 100, spread: 70 });
-                const win = [1, 5, 10, 50, 100, 500][Math.floor(Math.random()*6)];
+                // NEW RANDOM LOGIC: 1 to 6
+                const win = Math.floor(Math.random() * 6) + 1; 
+                
                 Swal.fire("You Won!", `₹${win} Added`, "success");
                 STATE.user.walletBalance += win;
                 localStorage.setItem('user', JSON.stringify(STATE.user));
@@ -382,12 +411,17 @@
 
         function copyRefer() {
             navigator.clipboard.writeText(STATE.user.referralCode);
-            UI.toast("Code Copied!");
+            Swal.fire({toast:true, position:'top-end', icon:'success', title:'Code Copied!', showConfirmButton:false, timer:1500});
         }
 
         function toggleTheme() {
             document.documentElement.classList.toggle('dark');
             localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        }
+
+        // --- NEW: OPEN YOUTUBE ---
+        function openHowToWork() {
+            window.open('https://www.youtube.com/@MrBeast', '_blank');
         }
 
         window.onload = initApp;
@@ -434,9 +468,11 @@
                     <p class="text-brand-100 text-xs font-bold uppercase mb-1">Total Balance</p>
                     <h1 class="text-5xl font-black val-balance mb-6">₹0.00</h1>
                     <div class="flex gap-3">
-<button onclick="switchTab('wallet')" class="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold text-sm shadow hover:bg-green-700 transition">Withdraw</button>                        <button onclick="checkSpin()" class="flex-1 bg-brand-500 border border-brand-400 text-white py-3 rounded-xl font-bold text-sm shadow">Spin</button>
+                        <button onclick="switchTab('wallet')" class="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold text-sm shadow hover:bg-green-700 transition">Withdraw</button>
+                        <button onclick="checkSpin()" class="flex-1 bg-brand-500 border border-brand-400 text-white py-3 rounded-xl font-bold text-sm shadow">Spin</button>
                     </div>
                 </div>
+                
                 <div class="bg-white dark:bg-dark-900 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-dark-800 flex justify-between items-center" onclick="switchTab('refer')">
                     <div><h3 class="font-bold text-gray-900 dark:text-white">Refer & Earn ₹5</h3><p class="text-xs text-gray-500">Share with friends</p></div>
                     <i class="fa-solid fa-share-nodes text-brand-600 text-xl"></i>
@@ -444,23 +480,27 @@
 
                 <div>
                     <h3 class="font-bold text-gray-900 dark:text-white mb-3">Available Tasks</h3>
+                    <button onclick="openHowToWork()" class="w-full mb-4 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 transition active:scale-95">
+                        <i class="fa-brands fa-youtube text-xl"></i> How to Work
+                    </button>
                     <div id="list-tasks"></div>
                 </div>
             </div>
 
             <div id="view-tasks" class="tab-view hidden space-y-6 animate-fade-in">
                 <h2 class="text-2xl font-black dark:text-white">All Tasks</h2>
+                <button onclick="openHowToWork()" class="w-full mb-4 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 transition active:scale-95">
+                    <i class="fa-brands fa-youtube text-xl"></i> How to Work
+                </button>
                 <div id="list-tasks-full"></div>
             </div>
 
-           <div id="view-refer" class="tab-view hidden space-y-6 animate-fade-in text-center">
+            <div id="view-refer" class="tab-view hidden space-y-6 animate-fade-in text-center">
                 <h2 class="text-2xl font-black dark:text-white">Refer & Earn</h2>
-                
                 <div class="bg-green-50 p-4 rounded-xl border border-green-200 flex justify-between items-center">
                     <span class="font-mono font-bold text-green-800 val-ref text-lg">...</span>
                     <button onclick="copyRefer()" class="text-xs font-bold text-white bg-green-600 px-4 py-2 rounded-lg hover:bg-green-700 shadow-md transition">COPY</button>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4">
                     <button onclick="shareRefer('wa')" class="bg-green-500 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
                     <button onclick="shareRefer('tg')" class="bg-blue-500 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2"><i class="fa-brands fa-telegram"></i> Telegram</button>
@@ -555,12 +595,12 @@
             <div class="w-72 h-72 rounded-full border-8 border-white overflow-hidden relative shadow-inner bg-slate-100">
                 <div id="wheel-inner" class="w-full h-full rounded-full transition-transform duration-[4000ms] ease-out" style="background: conic-gradient(#ef4444 0deg 60deg, #3b82f6 60deg 120deg, #22c55e 120deg 180deg, #eab308 180deg 240deg, #a855f7 240deg 300deg, #f97316 300deg 360deg);"></div>
                 <div class="absolute inset-0 flex justify-center items-center pointer-events-none">
-                    <div class="wheel-text" style="transform: rotate(30deg) translateY(-100px)">₹500</div>
+                    <div class="wheel-text" style="transform: rotate(30deg) translateY(-100px)">₹6</div>
                     <div class="wheel-text" style="transform: rotate(90deg) translateY(-100px)">₹1</div>
-                    <div class="wheel-text" style="transform: rotate(150deg) translateY(-100px)">₹5</div>
-                    <div class="wheel-text" style="transform: rotate(210deg) translateY(-100px)">₹10</div>
-                    <div class="wheel-text" style="transform: rotate(270deg) translateY(-100px)">₹50</div>
-                    <div class="wheel-text" style="transform: rotate(330deg) translateY(-100px)">₹100</div>
+                    <div class="wheel-text" style="transform: rotate(150deg) translateY(-100px)">₹2</div>
+                    <div class="wheel-text" style="transform: rotate(210deg) translateY(-100px)">₹3</div>
+                    <div class="wheel-text" style="transform: rotate(270deg) translateY(-100px)">₹4</div>
+                    <div class="wheel-text" style="transform: rotate(330deg) translateY(-100px)">₹5</div>
                 </div>
             </div>
             <div class="absolute top-0 left-1/2 -translate-x-1/2 -mt-2 w-0 h-0 border-l-[15px] border-l-transparent border-r-[15px] border-r-transparent border-t-[30px] border-t-white z-10"></div>
