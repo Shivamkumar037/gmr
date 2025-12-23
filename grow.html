@@ -196,12 +196,16 @@
                         <div class="space-y-5">
                             <div>
                                 <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">Category Chunein</label>
-                                <select id="order-category" onchange="updateServices()" class="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 focus:ring-2 focus:ring-blue-500 outline-none dark:text-white">
-                                    <option value="ig-likes">Instagram Likes</option>
-                                    <option value="ig-views">Instagram Views</option>
-                                    <option value="ig-comments">Instagram Comments</option>
-                                    <option value="ig-followers">Instagram Followers</option>
-                                </select>
+                               <select id="order-category" onchange="updateServices()" class="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 focus:ring-2 focus:ring-blue-500 outline-none dark:text-white">
+    <option value="ig-likes">Instagram Likes</option>
+    <option value="ig-views">Instagram Views</option>
+    <option value="ig-comments">Instagram Comments</option>
+    <option value="ig-followers">Instagram Followers</option>
+    <!-- New Categories Add Kar Diye Hain -->
+    <option value="yt-services">YouTube Services</option>
+    <option value="fb-services">Facebook Services</option>
+</select>
+
                             </div>
                             <div>
                                 <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">Service Chunein</label>
@@ -303,24 +307,41 @@
     <script>
         // --- SERVICES DATA ---
         const SERVICES = {
-            'ig-likes': [
-                { id: 'l1', name: 'IG Likes [Indian Real]', rate: 0.257 },
-                { id: 'l2', name: 'IG Likes [Normal HQ]', rate: 0.126 }
-            ],
-            'ig-views': [
-                { id: 'v1', name: 'IG Views [Indian]', rate: 0.23 },
-                { id: 'v2', name: 'IG Views [Global]', rate: 0.17 }
-            ],
-            'ig-comments': [
-                { id: 'c1', name: 'IG 100 Indian Custom Comments', rate: 10, perUnit: 100 },
-                { id: 'c2', name: 'IG 100 Emoji Comments', rate: 15, perUnit: 100 }
-            ],
-            'ig-followers': [
-                { id: 'f1', name: 'IG Followers 1K [Other]', rate: 21 },
-                { id: 'f2', name: 'IG Followers [10% Drop]', rate: 32 },
-                { id: 'f3', name: 'IG Followers [Indian Lifetime]', rate: 46 }
-            ]
-        };
+    'ig-likes': [
+        { id: 'l1', name: 'IG Likes [Indian Real]', rate: 0.257 },
+        { id: 'l2', name: 'IG Likes [Normal HQ]', rate: 0.126 }
+    ],
+    'ig-views': [
+        { id: 'v1', name: 'IG Views [Indian]', rate: 0.23 },
+        { id: 'v2', name: 'IG Views [Global]', rate: 0.17 }
+    ],
+    'ig-comments': [
+        { id: 'c1', name: 'IG 100 Indian Custom Comments', rate: 10, perUnit: 100 },
+        { id: 'c2', name: 'IG 100 Emoji Comments', rate: 15, perUnit: 100 }
+    ],
+    'ig-followers': [
+        { id: 'f1', name: 'IG Followers 1K [Other]', rate: 21 },
+        { id: 'f2', name: 'IG Followers [10% Drop]', rate: 32 },
+        { id: 'f3', name: 'IG Followers [Indian Lifetime]', rate: 46 }
+    ],
+    // YouTube Services
+    'yt-services': [
+        { id: 'yt1', name: 'YouTube Views [1K Speed]', rate: 20 },
+        { id: 'yt2', name: 'YouTube Comments [100 Quality]', rate: 35, perUnit: 100 },
+        { id: 'yt3', name: 'YouTube Subscribers [1K Lifetime]', rate: 80 },
+        { id: 'yt4', name: 'YouTube Watch Time 4000 Hours', rate: 400, perUnit: 1 }, // Set Qty 1 for package
+        { id: 'yt5', name: 'YouTube Watch Time 2000 Hours', rate: 200, perUnit: 1 },
+        { id: 'yt6', name: 'YouTube Likes [1K High Quality]', rate: 20 }
+    ],
+    // Facebook Services
+    'fb-services': [
+        { id: 'fb1', name: 'Facebook Followers [1K Instant]', rate: 20 },
+        { id: 'fb2', name: 'Facebook Likes [1K Pack]', rate: 1 },
+        { id: 'fb3', name: 'Facebook Video Views [1K]', rate: 1 },
+        { id: 'fb4', name: 'Facebook Comments [100 Custom]', rate: 5, perUnit: 100 }
+    ]
+};
+
 
         let currentUser = null;
         let users = JSON.parse(localStorage.getItem('grow_smm_users')) || [];
